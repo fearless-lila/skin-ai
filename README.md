@@ -4,30 +4,49 @@ Skin AI is a disability-first virtual clothing assistant. It helps people find g
 
 Virtual try-on is a visual preview only. It is not proof that a garment fits. Fit and compatibility information must come from product measurements, user-provided measurements, and explicit garment attributes.
 
+## Disability-first scope
+
+The MVP is designed around dressing barriers experienced by disabled people, including limited dexterity, restricted reach or shoulder movement, and pain or fatigue associated with changing clothes repeatedly.
+
+It will initially support user-stated functional requirements such as:
+
+- Prefer front fastenings, pull-on garments, wrap closures, or other explicitly documented closure types.
+- Avoid small buttons, rear fastenings, overhead-only dressing, or other closures the user identifies as inaccessible.
+- Compare available garment measurements with measurements or ranges provided by the user.
+- Reduce unnecessary physical try-ons by producing a small, evidence-based shortlist before offering visual try-on.
+- Clearly show when a retailer has not supplied enough accessibility or measurement information.
+
+The application does not assume that all disabled people have the same needs. A diagnosis or disability label is never used to guess clothing requirements. Users control which functional preferences are treated as requirements and which are preferences.
+
 ## Product flow
 
 ```text
-User describes what they need
+User sends a new message or follow-up
         ↓
-Frontend sends the request to our backend
+Frontend sends the newest message and bounded conversation state
         ↓
-Backend validates the raw input
+Backend validates the message, recent turns, requirements, and product IDs
         ↓
-Backend asks the LLM for intent, a contextual reply, and a search plan
+Backend reloads any referenced product facts from the trusted catalogue
+        ↓
+Backend asks the LLM for a contextual reply and updated requirements
         ↓
 Backend validates the complete structured response
         ↓
-Backend searches a grounded clothing catalogue
-        ↓
-Deterministic code checks measurements and access requirements
-        ↓
-Frontend displays an evidence-based shortlist
-        ↓
-User selects a garment and explicitly requests virtual try-on
-        ↓
-Backend calls YouCam and monitors the asynchronous task
-        ↓
-Frontend displays the generated image with a fit disclaimer
+Frontend displays the reply
+        ├── `searchReady: false` → wait for the next user message
+        └── `searchReady: true` → search the grounded catalogue
+                                      ↓
+                            Deterministic code checks measurements
+                            and access requirements
+                                      ↓
+                            Frontend displays an evidence-based shortlist
+                                      ↓
+                            User explicitly requests virtual try-on
+                                      ↓
+                            Backend calls YouCam and monitors the task
+                                      ↓
+                            Frontend displays the result with a fit disclaimer
 ```
 
 ## System responsibilities
@@ -37,7 +56,7 @@ Frontend displays the generated image with a fit disclaimer
 ```mermaid
 flowchart LR
     subgraph frontend["Frontend: browser"]
-        request["Collect clothing request"]
+        request["Collect newest message and recent state"]
         reply["Display contextual reply"]
         fallback["Display tested fallback"]
         shortlist["Display grounded shortlist"]
@@ -46,10 +65,11 @@ flowchart LR
     end
 
     subgraph backend["Backend: Cloudflare Worker"]
-        inputCheck["Validate user input"]
+        inputCheck["Validate message and conversation state"]
+        context["Load trusted context"]
         interpret["Request one structured LLM response"]
-        responseCheck["Validate status, reply and searches"]
-        status{"Request status"}
+        responseCheck["Validate status, reply, readiness and requirements"]
+        ready{"searchReady?"}
         match["Search and check compatibility"]
         vto["Create and monitor VTO task"]
     end
@@ -61,13 +81,16 @@ flowchart LR
     end
 
     request -->|"HTTPS request"| inputCheck
-    inputCheck --> interpret
+    inputCheck --> context
+    context -.->|"Reload product facts by ID"| catalogue
+    context --> interpret
     interpret -.->|"Interpret request"| llm
     interpret --> responseCheck
-    responseCheck -->|"Valid"| status
+    responseCheck -->|"Valid"| reply
+    responseCheck -->|"Valid"| ready
     responseCheck -->|"Invalid"| fallback
-    status -->|"All valid statuses"| reply
-    status -->|"Supported or mixed only"| match
+    ready -->|"Yes"| match
+    ready -->|"No product search"| reply
     match -.->|"Query products"| catalogue
     match -->|"Validated products"| shortlist
     shortlist --> consent
@@ -83,8 +106,11 @@ Arrows show which component initiates each action. Responses return through the 
 The frontend:
 
 - Collects the user's occasion, preferences, measurements, and access needs.
+- Keeps a bounded set of recent conversation turns and selected product IDs for the current MVP session.
+- Sends product IDs rather than claiming product facts.
 - Explains what information is optional.
-- Displays the interpreted request for review.
+- Displays the contextual reply on every valid turn, including clarification and unsupported requests.
+- Displays the interpreted requirements for review when they change.
 - Presents grounded products and compatibility evidence.
 - Collects explicit consent before uploading a photograph.
 - Shows upload, processing, success, and failure states.
@@ -94,10 +120,12 @@ The frontend:
 
 The backend is the controller of the system. It:
 
-- Validates incoming requests.
-- Calls the LLM once for intent, a contextual reply, and a search plan.
+- Validates the newest message and bounded conversation state.
+- Reloads trusted product facts for any product IDs supplied as context.
+- Calls the LLM once per conversational turn with the relevant recent messages and current requirements.
 - Validates every field in the LLM-generated response.
-- Searches the catalogue.
+- Retains the previous requirements when the LLM returns `requirements: null`.
+- Searches the catalogue only when the validated response sets `searchReady` to `true`.
 - Runs deterministic compatibility rules.
 - Enforces permissions, limits, and consent.
 - Keeps API keys secret.
@@ -110,12 +138,15 @@ The backend will initially run as a Cloudflare Worker, so the website and privat
 
 The LLM is the language interpretation layer. It:
 
-- Converts conversational requests into structured search plans.
+- Uses the relevant recent messages and current requirements to understand follow-ups.
+- Converts clothing requests into complete normalized requirements.
+- Returns `requirements: null` when a conversational answer should not change the current requirements.
+- Sets `searchReady` to indicate whether catalogue matching should run.
 - Identifies occasions, garment types, preferences, and access requirements.
 - Classifies requests as supported, mixed, or unsupported.
 - Writes a short contextual reply about what the application can handle.
 
-This first LLM call has not seen the catalogue results, so its reply cannot describe or recommend specific products. The LLM does not search arbitrary products, prove fit, invent measurements, grant consent, or bypass backend rules.
+The LLM has no automatic memory between API calls; the application supplies bounded, validated context on each turn. Unless the backend explicitly supplies verified product facts, the reply cannot describe or recommend specific products. The LLM does not search arbitrary products, prove fit, invent measurements, grant consent, or bypass backend rules.
 
 ### Clothing catalogue
 
@@ -128,67 +159,96 @@ The catalogue is the source of product truth. It contains fields such as:
 - Stretch or construction attributes where explicitly supplied.
 - Source and provenance of each attribute.
 
-The MVP will start with a small mock catalogue. Products must never be invented by the LLM.
+The MVP will start with a small, clearly labelled mock catalogue. Products must never be invented by the LLM or presented as real retailer listings.
+
+### Later: retailer catalogue enrichment
+
+After the local matching flow works, an authorised retailer API can supply basic product data such as product ID, name, price, image URL, product URL, sizes, variants, and availability. The backend will normalise that data into the application's internal catalogue format and add accessibility attributes through a separate enrichment step.
+
+Manual verification means reviewing explicit retailer evidence, including the product description, specification section, closure details, and size guide. Images may support that review, but an image alone is not sufficient evidence for closure location, dressing method, or accessibility.
+
+Each enriched attribute records its evidence and status:
+
+```json
+{
+  "closureLocation": {
+    "value": "front",
+    "status": "manually_verified",
+    "sourceText": "Front zip fastening with a large ring pull.",
+    "sourceUrl": "https://retailer.example/product/123",
+    "verifiedAt": "2026-08-04"
+  }
+}
+```
+
+Allowed evidence states include:
+
+- `retailer_provided`: supplied directly as a structured retailer attribute.
+- `manually_verified`: explicitly supported by retailer text or specifications and reviewed by a person.
+- `unknown`: the available evidence is insufficient.
+
+An LLM may suggest attributes extracted from product text, but suggested values remain unverified until reviewed. The application must never convert an ambiguous image or description into a confirmed accessibility fact. These labels describe garment properties, not universal suitability for disabled people.
 
 ### YouCam
 
 YouCam generates the visual clothing try-on. It does not decide whether the garment physically fits and is not the source of garment measurements.
 
-## Structured interpretation and search plans
+## Conversational interpretation and normalized requirements
 
 The LLM returns one JSON object containing:
 
 - `requestStatus`: whether the request is `supported`, `mixed`, or `unsupported`.
+- `searchReady`: whether the backend may run catalogue matching.
 - `reply`: a short contextual message for the user.
-- `searches`: catalogue searches proposed for the supported parts of the request.
+- `requirements`: a complete replacement for the current normalized requirements, or `null` when they should remain unchanged.
 
-This provides contextual wording and a search plan with one LLM call.
+This provides natural conversational wording and controlled matching input with one LLM call per user message.
 
 Example user request:
 
-> I need a petite wedding-guest dress. Back zips are difficult, and I prefer something below the knee.
+> I have limited hand dexterity and shoulder movement. I need a wedding-guest dress without small buttons, a back zip, or an overhead-only design.
 
-Example search plan:
+Example response:
 
 ```json
 {
   "requestStatus": "supported",
-  "reply": "I’ll look for petite wedding-guest dresses that avoid back zips and provide garment-length information.",
-  "searches": [
-    {
-      "garmentType": "dress",
-      "occasion": "wedding_guest",
-      "searchTerm": "petite midi dress",
-      "requiredClosures": ["pull_on", "front_zip"],
-      "excludedClosures": ["back_zip"],
-      "requiredMeasurements": ["garment_length_cm"]
-    }
-  ]
+  "searchReady": true,
+  "reply": "I’ll look for wedding-guest dresses with documented front or wrap fastenings and exclude the closures you identified as inaccessible.",
+  "requirements": {
+    "garmentTypes": ["dress"],
+    "occasion": "wedding_guest",
+    "requiredAccess": {
+      "closureLocation": ["front"],
+      "dressingMethod": ["full_front_opening", "wrap"]
+    },
+    "excludedAccess": {
+      "closureType": ["buttons"],
+      "closureLocation": ["back"],
+      "dressingMethod": ["overhead"]
+    },
+    "preferredAccess": {},
+    "requiredMeasurements": []
+  }
 }
 ```
 
-Example mixed request:
+Example follow-up question that does not change the search:
 
-> Book me a hotel and find a pull-on travel outfit.
+> What does a full front opening mean?
 
 ```json
 {
-  "requestStatus": "mixed",
-  "reply": "I can’t book a hotel, but I can help you find a pull-on travel outfit.",
-  "searches": [
-    {
-      "garmentType": "outfit",
-      "occasion": "travel",
-      "searchTerm": "pull-on travel outfit",
-      "requiredClosures": ["pull_on"],
-      "excludedClosures": [],
-      "requiredMeasurements": []
-    }
-  ]
+  "requestStatus": "supported",
+  "searchReady": false,
+  "reply": "It means the garment opens completely down the front rather than only opening at the neckline.",
+  "requirements": null
 }
 ```
 
-For a completely unsupported request, `requestStatus` is `unsupported` and `searches` must be empty. The contextual reply may explain the application's clothing-related scope without requiring a second LLM call.
+Here, `requirements: null` means that the backend keeps the existing requirements unchanged. A requirements object always represents the complete current state rather than a partial patch.
+
+For a completely unsupported request, `requestStatus` is `unsupported`, `searchReady` is `false`, and `requirements` is `null`. The contextual reply may explain the application's clothing-related scope without requiring a second LLM call.
 
 The entire response is an untrusted proposal. The backend decides whether the reply may be displayed and whether any searches may be executed.
 
@@ -200,25 +260,28 @@ Validation happens before and after the LLM call.
 
 Before calling the LLM, the backend checks:
 
-- The prompt exists, is a string, and is not empty.
+- The current message exists, is a string, and is not empty.
+- Recent messages and conversation state follow their strict schemas and bounded limits.
+- Referenced product IDs exist in the trusted catalogue before any product facts are used.
 - Length and request-size limits are respected.
 - The request contains no unexpected fields.
 - Uploaded files use permitted types and sizes.
 - Rate limits and relevant permissions are satisfied.
 
-### Search-plan validation
+### Structured-response validation
 
 Before searching the catalogue, the backend checks:
 
 1. **Schema:** required fields, data types, strict JSON shape, and unknown fields.
-2. **Status rules:** `unsupported` requires zero searches, `supported` requires at least one search, and `mixed` may execute only its valid clothing searches.
-3. **Reply safety:** plain text only, a strict length limit, no links or HTML, and a tested static fallback when the reply is missing or invalid.
-4. **Allowed values:** approved garment types, occasions, closures, and measurement names.
-5. **Business rules:** no contradictions, unsupported claims, or measurement checks without data.
-6. **Execution limits:** maximum searches, results, and concurrent downstream requests.
-7. **Permissions:** photo processing and virtual try-on cannot begin without explicit user action and consent.
+2. **Status rules:** `unsupported` requires `searchReady: false` and `requirements: null`.
+3. **Readiness rules:** `searchReady: true` requires `supported` or `mixed` status and a complete valid requirements object.
+4. **Reply safety:** plain text only, a strict length limit, no links or HTML, and a tested static fallback when the reply is missing or invalid.
+5. **Allowed values:** approved garment types, occasions, closures, and measurement names.
+6. **Business rules:** no contradictions, unsupported claims, or measurement checks without data.
+7. **Execution limits:** maximum results and concurrent downstream requests.
+8. **Permissions:** photo processing and virtual try-on cannot begin without explicit user action and consent.
 
-An invalid plan is never executed. The backend may attempt one controlled repair, validate it again, and otherwise return a user-friendly error.
+An invalid response is never executed. The backend may attempt one controlled repair, validate it again, and otherwise return a user-friendly error.
 
 ```text
 LLM proposes → backend validates → backend executes
@@ -281,8 +344,10 @@ The actual image upload may go directly from the browser to the temporary signed
 1. Define the request and catalogue schemas.
 2. Create a small grounded mock catalogue.
 3. Build and test deterministic catalogue matching.
-4. Add LLM search-plan generation and server-side validation.
+4. Add conversation-aware LLM interpretation and server-side validation.
 5. Build the accessible shortlist interface.
 6. Add the backend YouCam integration and progress states.
 7. Test consent, keyboard navigation, screen-reader labels, and error recovery.
-8. Add a controlled tool-using agent only after the individual workflow steps are reliable.
+8. Connect an authorised retailer API for basic product data.
+9. Manually verify and enrich a small real-product catalogue, preserving evidence and marking missing attributes as `unknown`.
+10. Add a controlled tool-using agent only after the individual workflow steps are reliable.

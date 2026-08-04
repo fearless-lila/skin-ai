@@ -1,0 +1,541 @@
+{
+  "catalogueType": "mock",
+  "notice": "Fictional products for local development and matching tests. These are not real retailer listings and must never be displayed as real products.",
+  "products": [
+    {
+      "id": "mock-dress-001",
+      "name": "Avery Front-Zip Dress",
+      "retailer": {
+        "id": "skin-ai-fictional-demo",
+        "name": "Skin AI Fictional Demo"
+      },
+      "productUrl": "https://demo.skin-ai.example/products/mock-dress-001",
+      "imageUrls": [
+        "https://demo.skin-ai.example/images/mock-dress-001.jpg"
+      ],
+      "garmentType": "dress",
+      "description": "Fictional test product with a full front zip and ring pull.",
+      "price": {
+        "amount": 68,
+        "currency": "GBP"
+      },
+      "availability": "in_stock",
+      "sizes": [
+        "S",
+        "M",
+        "L"
+      ],
+      "measurements": [
+        {
+          "size": "M",
+          "name": "chest",
+          "valueCm": 100,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment chest: 100 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-001/size-guide"
+        },
+        {
+          "size": "M",
+          "name": "waist",
+          "valueCm": 86,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment waist: 86 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-001/size-guide"
+        }
+      ],
+      "access": {
+        "closureType": {
+          "value": "zip",
+          "status": "retailer_provided",
+          "sourceText": "Full front zip fastening.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-001"
+        },
+        "closureLocation": {
+          "value": "front",
+          "status": "retailer_provided",
+          "sourceText": "Full front zip fastening.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-001"
+        },
+        "dressingMethod": {
+          "value": "full_front_opening",
+          "status": "retailer_provided",
+          "sourceText": "The zip opens fully from neckline to hem.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-001"
+        },
+        "gripFeature": {
+          "value": "ring_pull",
+          "status": "retailer_provided",
+          "sourceText": "Zip finished with a 3 cm ring pull.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-001"
+        },
+        "openingExtent": {
+          "value": "full",
+          "status": "retailer_provided",
+          "sourceText": "The zip opens fully from neckline to hem.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-001"
+        }
+      }
+    },
+    {
+      "id": "mock-dress-002",
+      "name": "Rowan Back-Zip Occasion Dress",
+      "retailer": {
+        "id": "skin-ai-fictional-demo",
+        "name": "Skin AI Fictional Demo"
+      },
+      "productUrl": "https://demo.skin-ai.example/products/mock-dress-002",
+      "imageUrls": [
+        "https://demo.skin-ai.example/images/mock-dress-002.jpg"
+      ],
+      "garmentType": "dress",
+      "description": "Fictional test product with a partial back zip.",
+      "price": {
+        "amount": 82,
+        "currency": "GBP"
+      },
+      "availability": "in_stock",
+      "sizes": [
+        "S",
+        "M",
+        "L"
+      ],
+      "measurements": [
+        {
+          "size": "M",
+          "name": "chest",
+          "valueCm": 96,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment chest: 96 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-002/size-guide"
+        }
+      ],
+      "access": {
+        "closureType": {
+          "value": "zip",
+          "status": "retailer_provided",
+          "sourceText": "Concealed zip at the centre back.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-002"
+        },
+        "closureLocation": {
+          "value": "back",
+          "status": "retailer_provided",
+          "sourceText": "Concealed zip at the centre back.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-002"
+        },
+        "dressingMethod": {
+          "value": "step_in",
+          "status": "retailer_provided",
+          "sourceText": "Designed to step into before closing the back zip.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-002"
+        },
+        "gripFeature": {
+          "value": "none_documented",
+          "status": "retailer_provided",
+          "sourceText": "Standard concealed zip with no added pull feature.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-002"
+        },
+        "openingExtent": {
+          "value": "partial",
+          "status": "retailer_provided",
+          "sourceText": "Partial-length centre-back opening.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-002"
+        }
+      }
+    },
+    {
+      "id": "mock-shirt-001",
+      "name": "Maya Button-Front Shirt",
+      "retailer": {
+        "id": "skin-ai-fictional-demo",
+        "name": "Skin AI Fictional Demo"
+      },
+      "productUrl": "https://demo.skin-ai.example/products/mock-shirt-001",
+      "imageUrls": [
+        "https://demo.skin-ai.example/images/mock-shirt-001.jpg"
+      ],
+      "garmentType": "shirt",
+      "description": "Fictional test product with conventional front buttons.",
+      "price": {
+        "amount": 44,
+        "currency": "GBP"
+      },
+      "availability": "in_stock",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
+      "measurements": [
+        {
+          "size": "M",
+          "name": "chest",
+          "valueCm": 108,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment chest: 108 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-shirt-001/size-guide"
+        },
+        {
+          "size": "M",
+          "name": "sleeve_length",
+          "valueCm": 61,
+          "status": "retailer_provided",
+          "sourceText": "Size M sleeve length: 61 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-shirt-001/size-guide"
+        }
+      ],
+      "access": {
+        "closureType": {
+          "value": "buttons",
+          "status": "retailer_provided",
+          "sourceText": "Nine-button front fastening.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-shirt-001"
+        },
+        "closureLocation": {
+          "value": "front",
+          "status": "retailer_provided",
+          "sourceText": "Nine-button front fastening.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-shirt-001"
+        },
+        "dressingMethod": {
+          "value": "full_front_opening",
+          "status": "retailer_provided",
+          "sourceText": "Buttons open from collar to hem.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-shirt-001"
+        },
+        "gripFeature": {
+          "value": "none_documented",
+          "status": "retailer_provided",
+          "sourceText": "Standard buttons without added grip features.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-shirt-001"
+        },
+        "openingExtent": {
+          "value": "full",
+          "status": "retailer_provided",
+          "sourceText": "Buttons open from collar to hem.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-shirt-001"
+        }
+      }
+    },
+    {
+      "id": "mock-dress-003",
+      "name": "Nora Wrap Dress",
+      "retailer": {
+        "id": "skin-ai-fictional-demo",
+        "name": "Skin AI Fictional Demo"
+      },
+      "productUrl": "https://demo.skin-ai.example/products/mock-dress-003",
+      "imageUrls": [
+        "https://demo.skin-ai.example/images/mock-dress-003.jpg"
+      ],
+      "garmentType": "dress",
+      "description": "Fictional test product with a manually verified wrap construction.",
+      "price": {
+        "amount": 59,
+        "currency": "GBP"
+      },
+      "availability": "in_stock",
+      "sizes": [
+        "S",
+        "M",
+        "L"
+      ],
+      "measurements": [],
+      "access": {
+        "closureType": {
+          "value": "wrap_tie",
+          "status": "manually_verified",
+          "sourceText": "Functional waist tie secures the overlapping front panels.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-003",
+          "verifiedAt": "2026-08-04"
+        },
+        "closureLocation": {
+          "value": "front",
+          "status": "manually_verified",
+          "sourceText": "The overlapping panels open at the front.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-003",
+          "verifiedAt": "2026-08-04"
+        },
+        "dressingMethod": {
+          "value": "wrap",
+          "status": "manually_verified",
+          "sourceText": "The garment is put on and secured as a wrap dress.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-003",
+          "verifiedAt": "2026-08-04"
+        },
+        "gripFeature": {
+          "value": "none_documented",
+          "status": "manually_verified",
+          "sourceText": "No ring, loop, or extended grip feature is described.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-003",
+          "verifiedAt": "2026-08-04"
+        },
+        "openingExtent": {
+          "value": "full",
+          "status": "manually_verified",
+          "sourceText": "The front panels separate fully when the waist tie is released.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-003",
+          "verifiedAt": "2026-08-04"
+        }
+      }
+    },
+    {
+      "id": "mock-trousers-001",
+      "name": "Ellis Pull-On Trousers",
+      "retailer": {
+        "id": "skin-ai-fictional-demo",
+        "name": "Skin AI Fictional Demo"
+      },
+      "productUrl": "https://demo.skin-ai.example/products/mock-trousers-001",
+      "imageUrls": [
+        "https://demo.skin-ai.example/images/mock-trousers-001.jpg"
+      ],
+      "garmentType": "trousers",
+      "description": "Fictional pull-on test product with no fastening.",
+      "price": {
+        "amount": 51,
+        "currency": "GBP"
+      },
+      "availability": "in_stock",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
+      "measurements": [
+        {
+          "size": "M",
+          "name": "waist",
+          "valueCm": 82,
+          "status": "retailer_provided",
+          "sourceText": "Size M relaxed garment waist: 82 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-trousers-001/size-guide"
+        },
+        {
+          "size": "M",
+          "name": "inside_leg",
+          "valueCm": 76,
+          "status": "retailer_provided",
+          "sourceText": "Size M inside leg: 76 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-trousers-001/size-guide"
+        }
+      ],
+      "access": {
+        "closureType": {
+          "value": "none",
+          "status": "retailer_provided",
+          "sourceText": "Pull-on elastic waist with no fastening.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-trousers-001"
+        },
+        "closureLocation": {
+          "value": "unknown",
+          "status": "unknown"
+        },
+        "dressingMethod": {
+          "value": "step_in",
+          "status": "retailer_provided",
+          "sourceText": "Step-in pull-on construction.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-trousers-001"
+        },
+        "gripFeature": {
+          "value": "none_documented",
+          "status": "retailer_provided",
+          "sourceText": "No fastening or added grip feature.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-trousers-001"
+        },
+        "openingExtent": {
+          "value": "unknown",
+          "status": "unknown"
+        }
+      }
+    },
+    {
+      "id": "mock-cardigan-001",
+      "name": "Casey Magnetic-Front Cardigan",
+      "retailer": {
+        "id": "skin-ai-fictional-demo",
+        "name": "Skin AI Fictional Demo"
+      },
+      "productUrl": "https://demo.skin-ai.example/products/mock-cardigan-001",
+      "imageUrls": [
+        "https://demo.skin-ai.example/images/mock-cardigan-001.jpg"
+      ],
+      "garmentType": "cardigan",
+      "description": "Fictional test product with concealed magnetic front closures.",
+      "price": {
+        "amount": 64,
+        "currency": "GBP"
+      },
+      "availability": "in_stock",
+      "sizes": [
+        "S",
+        "M",
+        "L"
+      ],
+      "measurements": [
+        {
+          "size": "M",
+          "name": "chest",
+          "valueCm": 112,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment chest: 112 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-cardigan-001/size-guide"
+        }
+      ],
+      "access": {
+        "closureType": {
+          "value": "magnetic",
+          "status": "retailer_provided",
+          "sourceText": "Concealed magnetic front closures.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-cardigan-001"
+        },
+        "closureLocation": {
+          "value": "front",
+          "status": "retailer_provided",
+          "sourceText": "Concealed magnetic front closures.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-cardigan-001"
+        },
+        "dressingMethod": {
+          "value": "full_front_opening",
+          "status": "retailer_provided",
+          "sourceText": "The cardigan opens fully at the front.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-cardigan-001"
+        },
+        "gripFeature": {
+          "value": "none_documented",
+          "status": "retailer_provided",
+          "sourceText": "No separate pull tab or grip loop is provided.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-cardigan-001"
+        },
+        "openingExtent": {
+          "value": "full",
+          "status": "retailer_provided",
+          "sourceText": "The cardigan opens fully at the front.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-cardigan-001"
+        }
+      }
+    },
+    {
+      "id": "mock-blouse-001",
+      "name": "Samira Detail-Unconfirmed Blouse",
+      "retailer": {
+        "id": "skin-ai-fictional-demo",
+        "name": "Skin AI Fictional Demo"
+      },
+      "productUrl": "https://demo.skin-ai.example/products/mock-blouse-001",
+      "imageUrls": [
+        "https://demo.skin-ai.example/images/mock-blouse-001.jpg"
+      ],
+      "garmentType": "blouse",
+      "description": "Fictional test product whose retailer description omits all fastening and dressing details.",
+      "price": {
+        "amount": 39,
+        "currency": "GBP"
+      },
+      "availability": "in_stock",
+      "sizes": [
+        "S",
+        "M",
+        "L"
+      ],
+      "measurements": [],
+      "access": {
+        "closureType": {
+          "value": "unknown",
+          "status": "unknown"
+        },
+        "closureLocation": {
+          "value": "unknown",
+          "status": "unknown"
+        },
+        "dressingMethod": {
+          "value": "unknown",
+          "status": "unknown"
+        },
+        "gripFeature": {
+          "value": "unknown",
+          "status": "unknown"
+        },
+        "openingExtent": {
+          "value": "unknown",
+          "status": "unknown"
+        }
+      }
+    },
+    {
+      "id": "mock-jumpsuit-001",
+      "name": "Taylor Side-Zip Jumpsuit",
+      "retailer": {
+        "id": "skin-ai-fictional-demo",
+        "name": "Skin AI Fictional Demo"
+      },
+      "productUrl": "https://demo.skin-ai.example/products/mock-jumpsuit-001",
+      "imageUrls": [
+        "https://demo.skin-ai.example/images/mock-jumpsuit-001.jpg"
+      ],
+      "garmentType": "jumpsuit",
+      "description": "Fictional test product with a partial side zip and extended pull tab.",
+      "price": {
+        "amount": 76,
+        "currency": "GBP"
+      },
+      "availability": "in_stock",
+      "sizes": [
+        "S",
+        "M",
+        "L"
+      ],
+      "measurements": [
+        {
+          "size": "M",
+          "name": "chest",
+          "valueCm": 102,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment chest: 102 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-jumpsuit-001/size-guide"
+        },
+        {
+          "size": "M",
+          "name": "inside_leg",
+          "valueCm": 78,
+          "status": "retailer_provided",
+          "sourceText": "Size M inside leg: 78 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-jumpsuit-001/size-guide"
+        }
+      ],
+      "access": {
+        "closureType": {
+          "value": "zip",
+          "status": "retailer_provided",
+          "sourceText": "Partial side zip fastening.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-jumpsuit-001"
+        },
+        "closureLocation": {
+          "value": "side",
+          "status": "retailer_provided",
+          "sourceText": "Partial side zip fastening.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-jumpsuit-001"
+        },
+        "dressingMethod": {
+          "value": "step_in",
+          "status": "retailer_provided",
+          "sourceText": "Step-in construction with a side opening.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-jumpsuit-001"
+        },
+        "gripFeature": {
+          "value": "extended_tab",
+          "status": "retailer_provided",
+          "sourceText": "Zip includes an extended fabric pull tab.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-jumpsuit-001"
+        },
+        "openingExtent": {
+          "value": "partial",
+          "status": "retailer_provided",
+          "sourceText": "Partial side opening.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-jumpsuit-001"
+        }
+      }
+    }
+  ]
+}

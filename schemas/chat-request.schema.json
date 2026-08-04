@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skin-ai:schema:chat-request:v1",
+  "title": "Skin AI conversational interpretation request",
+  "description": "The validated conversational context used to interpret a new user message. Product IDs are references only; the backend must load product facts from the trusted catalogue.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "conversationId",
+    "currentMessage",
+    "recentMessages",
+    "conversationState"
+  ],
+  "properties": {
+    "conversationId": {
+      "description": "The current conversation identifier, or null before the backend assigns one.",
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "currentMessage": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+    },
+    "recentMessages": {
+      "description": "A bounded set of recent turns supplied as conversational context, ordered from oldest to newest.",
+      "type": "array",
+      "maxItems": 12,
+      "items": {
+        "$ref": "#/$defs/message"
+      }
+    },
+    "conversationState": {
+      "$ref": "#/$defs/conversationState"
+    }
+  },
+  "$defs": {
+    "message": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "role",
+        "content"
+      ],
+      "properties": {
+        "role": {
+          "type": "string",
+          "enum": [
+            "user",
+            "assistant"
+          ]
+        },
+        "content": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        }
+      }
+    },
+    "conversationState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "currentRequirements",
+        "lastDisplayedProductIds",
+        "selectedProductId"
+      ],
+      "properties": {
+        "currentRequirements": {
+          "description": "The latest complete normalized requirements, or null when none have been collected.",
+          "oneOf": [
+            {
+              "$ref": "urn:skin-ai:schema:user-requirements:v1"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lastDisplayedProductIds": {
+          "description": "References to the most recently displayed products. The backend reloads and validates their facts.",
+          "type": "array",
+          "maxItems": 12,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/productId"
+          }
+        },
+        "selectedProductId": {
+          "description": "The product most recently selected by the user, or null.",
+          "oneOf": [
+            {
+              "$ref": "#/$defs/productId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "productId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    }
+  }
+}

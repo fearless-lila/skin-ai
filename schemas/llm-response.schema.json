@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skin-ai:schema:llm-response:v1",
+  "title": "Skin AI LLM interpretation response",
+  "description": "The complete structured response returned by the language interpretation call. The backend treats this response as an untrusted proposal and validates it before displaying the reply or matching products.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "requestStatus",
+    "searchReady",
+    "reply",
+    "requirements"
+  ],
+  "properties": {
+    "requestStatus": {
+      "description": "Whether the original user message contains a supported clothing request.",
+      "type": "string",
+      "enum": [
+        "supported",
+        "mixed",
+        "unsupported"
+      ]
+    },
+    "searchReady": {
+      "description": "Whether the backend may run catalogue matching after validating this response.",
+      "type": "boolean"
+    },
+    "reply": {
+      "description": "A short contextual response. It must not claim product facts or results that the backend did not supply as trusted context.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300,
+      "pattern": "^[^<>]*$"
+    },
+    "requirements": {
+      "description": "A complete replacement for the current normalized requirements, or null when the existing requirements should remain unchanged.",
+      "oneOf": [
+        {
+          "$ref": "urn:skin-ai:schema:user-requirements:v1"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "requestStatus": {
+            "const": "unsupported"
+          }
+        },
+        "required": [
+          "requestStatus"
+        ]
+      },
+      "then": {
+        "properties": {
+          "searchReady": {
+            "const": false
+          },
+          "requirements": {
+            "type": "null"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "searchReady": {
+            "const": true
+          }
+        },
+        "required": [
+          "searchReady"
+        ]
+      },
+      "then": {
+        "properties": {
+          "requestStatus": {
+            "enum": [
+              "supported",
+              "mixed"
+            ]
+          },
+          "requirements": {
+            "$ref": "urn:skin-ai:schema:user-requirements:v1"
+          }
+        }
+      }
+    }
+  ]
+}
