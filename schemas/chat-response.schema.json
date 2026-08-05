@@ -1,0 +1,586 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skin-ai:schema:chat-response:v1",
+  "title": "Skin AI backend chat response",
+  "description": "The authoritative response returned by the backend to the frontend after validating the LLM proposal and optionally running deterministic catalogue matching.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "conversationId",
+    "requestStatus",
+    "reply",
+    "currentRequirements",
+    "searchPerformed",
+    "results"
+  ],
+  "properties": {
+    "conversationId": {
+      "$ref": "#/$defs/id"
+    },
+    "requestStatus": {
+      "type": "string",
+      "enum": [
+        "supported",
+        "mixed",
+        "unsupported"
+      ]
+    },
+    "reply": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300,
+      "pattern": "^[^<>]*$"
+    },
+    "currentRequirements": {
+      "description": "The authoritative current requirements after applying this turn, or null when no clothing requirements have been collected.",
+      "oneOf": [
+        {
+          "$ref": "urn:skin-ai:schema:user-requirements:v1"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "searchPerformed": {
+      "type": "boolean"
+    },
+    "results": {
+      "description": "Grounded catalogue results when matching ran, otherwise null.",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/searchResults"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "searchPerformed": {
+            "const": true
+          }
+        },
+        "required": [
+          "searchPerformed"
+        ]
+      },
+      "then": {
+        "properties": {
+          "requestStatus": {
+            "enum": [
+              "supported",
+              "mixed"
+            ]
+          },
+          "currentRequirements": {
+            "$ref": "urn:skin-ai:schema:user-requirements:v1"
+          },
+          "results": {
+            "$ref": "#/$defs/searchResults"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "results": {
+            "type": "null"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "requestStatus": {
+            "const": "unsupported"
+          }
+        },
+        "required": [
+          "requestStatus"
+        ]
+      },
+      "then": {
+        "properties": {
+          "searchPerformed": {
+            "const": false
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "searchResults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "catalogueType",
+        "notice",
+        "compatibleProducts",
+        "productsWithMissingInformation",
+        "rejectedProductCount"
+      ],
+      "properties": {
+        "catalogueType": {
+          "type": "string",
+          "enum": [
+            "mock",
+            "retailer"
+          ]
+        },
+        "notice": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "compatibleProducts": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "$ref": "#/$defs/compatibleProductResult"
+          }
+        },
+        "productsWithMissingInformation": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "$ref": "#/$defs/missingInformationProductResult"
+          }
+        },
+        "rejectedProductCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "catalogueType": {
+                "const": "mock"
+              }
+            },
+            "required": [
+              "catalogueType"
+            ]
+          },
+          "then": {
+            "properties": {
+              "notice": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "compatibleProductResult": {
+      "type": "object",
+      "$ref": "#/$defs/productResult",
+      "properties": {
+        "compatibility": {
+          "$ref": "#/$defs/compatibleSummary"
+        }
+      }
+    },
+    "missingInformationProductResult": {
+      "type": "object",
+      "$ref": "#/$defs/productResult",
+      "properties": {
+        "compatibility": {
+          "$ref": "#/$defs/missingInformationSummary"
+        }
+      }
+    },
+    "productResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "product",
+        "compatibility"
+      ],
+      "properties": {
+        "product": {
+          "$ref": "#/$defs/productCard"
+        },
+        "compatibility": {
+          "$ref": "#/$defs/compatibilitySummary"
+        }
+      }
+    },
+    "productCard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "retailer",
+        "imageUrl",
+        "productUrl",
+        "price",
+        "availability",
+        "sizes"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "retailer": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "name"
+          ],
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/id"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 160
+            }
+          }
+        },
+        "imageUrl": {
+          "description": "An authorised absolute URL that the frontend may use as an image source.",
+          "type": "string",
+          "format": "uri"
+        },
+        "productUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "price": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/price"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "availability": {
+          "type": "string",
+          "enum": [
+            "in_stock",
+            "out_of_stock",
+            "unknown"
+          ]
+        },
+        "sizes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          }
+        }
+      }
+    },
+    "price": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "amount",
+        "currency"
+      ],
+      "properties": {
+        "amount": {
+          "type": "number",
+          "minimum": 0
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        }
+      }
+    },
+    "compatibleSummary": {
+      "type": "object",
+      "$ref": "#/$defs/compatibilitySummary",
+      "properties": {
+        "status": {
+          "const": "compatible"
+        },
+        "missingInformation": {
+          "type": "array",
+          "maxItems": 0
+        }
+      }
+    },
+    "missingInformationSummary": {
+      "type": "object",
+      "$ref": "#/$defs/compatibilitySummary",
+      "properties": {
+        "status": {
+          "const": "missing_information"
+        },
+        "missingInformation": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/missingFact"
+          }
+        }
+      }
+    },
+    "compatibilitySummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "compatibleSizes",
+        "confirmedMatches",
+        "missingInformation",
+        "preferenceMatches",
+        "preferenceScore"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "compatible",
+            "missing_information"
+          ]
+        },
+        "compatibleSizes": {
+          "type": "array",
+          "maxItems": 100,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          }
+        },
+        "confirmedMatches": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/confirmedFact"
+          }
+        },
+        "missingInformation": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/missingFact"
+          }
+        },
+        "preferenceMatches": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/preferenceFact"
+          }
+        },
+        "preferenceScore": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5
+        }
+      }
+    },
+    "confirmedFact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "field",
+        "requirementType",
+        "actualValues",
+        "evidenceStatus",
+        "sourceText",
+        "sourceUrl",
+        "verifiedAt"
+      ],
+      "properties": {
+        "field": {
+          "$ref": "#/$defs/matchField"
+        },
+        "requirementType": {
+          "type": "string",
+          "enum": [
+            "required",
+            "excluded"
+          ]
+        },
+        "actualValues": {
+          "$ref": "#/$defs/displayValues"
+        },
+        "evidenceStatus": {
+          "$ref": "#/$defs/nullableEvidenceStatus"
+        },
+        "sourceText": {
+          "$ref": "#/$defs/nullableText"
+        },
+        "sourceUrl": {
+          "$ref": "#/$defs/nullableUri"
+        },
+        "verifiedAt": {
+          "$ref": "#/$defs/nullableDate"
+        }
+      }
+    },
+    "preferenceFact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "field",
+        "actualValues",
+        "evidenceStatus",
+        "sourceText",
+        "sourceUrl",
+        "verifiedAt"
+      ],
+      "properties": {
+        "field": {
+          "$ref": "#/$defs/matchField"
+        },
+        "actualValues": {
+          "$ref": "#/$defs/displayValues"
+        },
+        "evidenceStatus": {
+          "$ref": "#/$defs/nullableEvidenceStatus"
+        },
+        "sourceText": {
+          "$ref": "#/$defs/nullableText"
+        },
+        "sourceUrl": {
+          "$ref": "#/$defs/nullableUri"
+        },
+        "verifiedAt": {
+          "$ref": "#/$defs/nullableDate"
+        }
+      }
+    },
+    "missingFact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "field",
+        "requirementType",
+        "requestedValues",
+        "reason"
+      ],
+      "properties": {
+        "field": {
+          "$ref": "#/$defs/matchField"
+        },
+        "requirementType": {
+          "type": "string",
+          "enum": [
+            "required",
+            "excluded"
+          ]
+        },
+        "requestedValues": {
+          "$ref": "#/$defs/displayValues"
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "unknown_product_fact",
+            "cannot_verify_exclusion",
+            "insufficient_measurement_data"
+          ]
+        }
+      }
+    },
+    "matchField": {
+      "type": "string",
+      "enum": [
+        "garmentType",
+        "access.closureType",
+        "access.closureLocation",
+        "access.dressingMethod",
+        "access.gripFeature",
+        "access.openingExtent",
+        "measurements"
+      ]
+    },
+    "displayValues": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      }
+    },
+    "nullableEvidenceStatus": {
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "retailer_provided",
+            "manually_verified"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "nullableText": {
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "nullableUri": {
+      "oneOf": [
+        {
+          "type": "string",
+          "format": "uri"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "nullableDate": {
+      "oneOf": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

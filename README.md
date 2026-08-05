@@ -148,6 +148,8 @@ The LLM is the language interpretation layer. It:
 
 The LLM has no automatic memory between API calls; the application supplies bounded, validated context on each turn. Unless the backend explicitly supplies verified product facts, the reply cannot describe or recommend specific products. The LLM does not search arbitrary products, prove fit, invent measurements, grant consent, or bypass backend rules.
 
+The current backend includes an OpenAI Responses API interpreter using strict Structured Outputs. Its generation schema permits only the supported-search, supported-conversation, and unsupported field combinations. The interpreter normalizes and validates the result, making at most one correction call for deeper requirements contradictions. It reads its API key from backend configuration, sends no API key in the request body, sets API response storage to false, and returns only a validated proposal to the orchestrator. Tests mock the network boundary; a live call will be tested only after `OPENAI_API_KEY` is configured as a server-side secret.
+
 ### Clothing catalogue
 
 The catalogue is the source of product truth. It contains fields such as:

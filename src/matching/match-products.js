@@ -48,7 +48,7 @@ export function matchProducts(requirements, products) {
 }
 
 export function matchProduct(requirements, product) {
-  assertRequirements(requirements);
+  assertValidMatchingRequirements(requirements);
 
   if (!product || typeof product !== "object") {
     throw new TypeError("Product must be an object.");
@@ -366,14 +366,14 @@ function copyMeasurementEvidence(measurement) {
 }
 
 function assertMatchingInput(requirements, products) {
-  assertRequirements(requirements);
+  assertValidMatchingRequirements(requirements);
 
   if (!Array.isArray(products)) {
     throw new TypeError("Products must be an array.");
   }
 }
 
-function assertRequirements(requirements) {
+export function assertValidMatchingRequirements(requirements) {
   if (!requirements || typeof requirements !== "object") {
     throw new TypeError("Requirements must be an object.");
   }

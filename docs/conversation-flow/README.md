@@ -6,7 +6,7 @@ It focuses on the conversational search flow. Product matching and virtual try-o
 
 ## Current implementation status
 
-The repository currently contains the schemas and mock catalogue, but it does not yet contain a frontend chat component, a `/api/chat` backend handler, an LLM API call, or a conversation database.
+The repository currently contains the schemas, mock catalogue, tested deterministic matcher, tested backend-to-frontend response adapter, tested framework-independent chat orchestrator, and a tested OpenAI Responses API interpreter. It does not yet contain a frontend chat component, a Cloudflare `/api/chat` HTTP handler, a configured server-side API key, a live LLM verification call, or a conversation database.
 
 The persistence described below is therefore the planned MVP behaviour:
 
@@ -15,6 +15,18 @@ The persistence described below is therefore the planned MVP behaviour:
 - Durable backend persistence by `conversationId` is a later improvement.
 
 The schemas define the contracts that the future frontend and backend code must follow. A schema validates data; it does not store, transform, or send data by itself.
+
+The implemented [`handleChatTurn`](../../src/chat/handle-chat-turn.js) function now connects those contracts in plain JavaScript. It is the workflow that a future Cloudflare Worker will call; it is not itself an internet endpoint.
+
+```text
+Cloudflare Worker HTTP handler (not implemented yet)
+        ↓ calls
+handleChatTurn (implemented and tested)
+        ↓ coordinates
+validation → interpretation → optional matching → response adapter
+```
+
+The interpreter is injected into the function. Most orchestration tests supply a fake interpreter. The implemented OpenAI interpreter uses the Responses API with strict Structured Outputs, but its network tests also use an injected fake `fetch`, so the test suite remains deterministic and free from API keys or model costs.
 
 ## Mental model
 
@@ -47,15 +59,18 @@ Schemas define and validate the boundaries.
 | Schema | Direction | Purpose | Is it supplied to the LLM? |
 | --- | --- | --- | --- |
 | [`chat-request.schema.json`](../../schemas/chat-request.schema.json) | Frontend → backend | Validates the newest message, recent visible messages, current requirements, and product ID references. | No. The backend uses it before constructing the model input. |
-| [`user-requirements.schema.json`](../../schemas/user-requirements.schema.json) | Shared nested structure | Defines the controlled clothing vocabulary used for matching. It is referenced by the chat request and LLM response schemas. | Indirectly. It is resolved into the complete output contract. |
-| [`llm-response.schema.json`](../../schemas/llm-response.schema.json) | LLM → backend | Restricts the LLM to `requestStatus`, `searchReady`, `reply`, and `requirements`, including the rules connecting those fields. | Yes. The backend supplies a resolved version as the required output shape and validates the returned JSON again. |
+| [`user-requirements.schema.json`](../../schemas/user-requirements.schema.json) | Shared nested structure | Defines the controlled clothing vocabulary used for matching. It is referenced by the chat request and canonical LLM response schemas. | Indirectly. The OpenAI generation schema repeats its approved vocabulary using provider-compatible rules. |
+| [`llm-response.schema.json`](../../schemas/llm-response.schema.json) | LLM → backend | Applies the canonical server validation to `requestStatus`, `searchReady`, `reply`, and normalized `requirements`, including conditional business rules. | No. It contains conditions unsupported by OpenAI Structured Outputs and is applied after generation. |
+| [`openai-llm-response.schema.json`](../../schemas/openai-llm-response.schema.json) | Backend → OpenAI | Uses an OpenAI-only `result` wrapper containing three mutually exclusive variants: supported search, supported conversation without search, or unsupported. Nullable placeholders are normalized before server validation. | Yes. It is the generation-time output contract. |
 | [`product.schema.json`](../../schemas/product.schema.json) | Catalogue → backend | Defines trusted product records, measurements, accessibility facts, and evidence states. | Not for ordinary language interpretation. The backend may supply selected verified facts when they are necessary to answer a product question. |
+| [`chat-response.schema.json`](../../schemas/chat-response.schema.json) | Backend → frontend | Defines the authoritative reply, current requirements, search state, product-card image URLs, and grounded compatibility summaries displayed by the frontend. | No. It validates the final response after LLM interpretation and optional matching are complete. |
 
-The schema files do not perform conversion. Future backend code will perform the conversion:
+The schema files do not perform conversion. The implemented backend workflow performs the conversion and orchestration:
 
 ```text
 Schema = blueprint and validator
-Backend handler = transformer and orchestrator
+handleChatTurn = transformer and orchestrator
+Future Cloudflare handler = HTTP entrance and exit
 ```
 
 ## What conversation state do we need?
@@ -191,7 +206,25 @@ The backend checks the object with `chat-request.schema.json` before calling the
 - Product ID references have a valid shape.
 - No unexpected fields or browser-supplied product facts were inserted.
 
-Invalid input stops here and receives a controlled error. It is not forwarded to the model.
+Invalid input stops here and produces a typed internal error. It is not forwarded to the model. The future Cloudflare handler will convert that internal error into a controlled public HTTP response.
+
+This is the first node in the implemented `handleChatTurn` workflow. The workflow uses explicit functions and one conditional branch rather than a graph framework:
+
+```text
+validate_request
+        ↓
+load_trusted_context
+        ↓
+interpret_message
+        ↓
+validate_interpretation
+        ↓
+searchReady? ── yes → match_catalogue
+        ↓                    ↓
+        └──────────→ build_response
+```
+
+Each failure identifies the step that failed. Invalid browser data stops before the interpreter, invalid model output stops before matching, and a matching failure stops before the final response is assembled.
 
 ### Stage 4: the backend enriches the runtime context
 
@@ -237,7 +270,15 @@ NEW USER MESSAGE:
 Find me a dress with a front opening. I cannot reach a back zip.
 ```
 
-The backend also supplies the resolved LLM-response schema as the required output format. The chat-request schema is not sent as the model's output format.
+For the OpenAI implementation, the backend supplies `openai-llm-response.schema.json` as the strict generation-time output format. OpenAI Structured Outputs requires every object field to be required and does not support conditional `if`/`then` rules. The generation schema therefore places the interpretation inside a `result` property whose nested `anyOf` permits only three complete combinations:
+
+```text
+supported or mixed + searchReady true  + requirements object
+supported or mixed + searchReady false + requirements object or null
+unsupported        + searchReady false + requirements null
+```
+
+The interpreter unwraps `result` and removes nullable placeholders. The normalized result is then checked against the stricter `llm-response.schema.json` and deterministic requirements rules. The OpenAI-only wrapper never reaches `handleChatTurn` or the frontend. The chat-request schema is not sent as the model's output format.
 
 ### Stage 6: the LLM returns a structured proposal
 
@@ -284,7 +325,16 @@ requirements null
 → keep current requirements unchanged
 ```
 
-The backend also applies business rules that JSON Schema cannot fully express, including contradiction checks and execution limits. An invalid response is not executed. The frontend receives a tested fallback or controlled error.
+The backend also applies business rules that the generation schema cannot fully express, such as a closure being both required and excluded or a minimum measurement exceeding its maximum. If the first normalized result fails these checks, the interpreter makes one correction call containing the normalized result and concise validation problems. The corrected result must pass the same checks. There is no unlimited retry loop:
+
+```text
+first result valid       → continue
+first result invalid     → one correction call
+corrected result valid   → continue
+corrected result invalid → stop before matching
+```
+
+An invalid response is never executed. The future Cloudflare handler will convert the final typed failure into a controlled public response.
 
 ### Stage 8: the backend decides whether to match products
 
@@ -409,10 +459,10 @@ The backend displays the reply and does not search the catalogue. Existing requi
 | Chat API request | Frontend → backend | Current message, recent visible messages, current requirements, recent product IDs | `chat-request.schema.json` |
 | Trusted lookup | Backend → catalogue | Product IDs only | Backend authorization and catalogue lookup rules |
 | Model input | Backend → LLM | Private instructions, bounded history, current requirements, trusted product context, newest message | Backend prompt builder; input is not controlled by the LLM-response schema |
-| Model output contract | Backend → LLM | Resolved allowed output structure | `llm-response.schema.json` plus `user-requirements.schema.json` |
+| Model output contract | Backend → LLM | OpenAI-compatible allowed output structure | `openai-llm-response.schema.json` |
 | Model response | LLM → backend | Status, readiness, reply, requirements or `null` | Same response schemas are used again for server validation |
 | Matching input | Backend → matcher | Validated requirements and trusted product records | `user-requirements.schema.json` and `product.schema.json` |
-| UI result | Backend → frontend | Validated reply, authoritative current state, and grounded results when applicable | A dedicated backend-response schema has not yet been created |
+| UI result | Backend → frontend | Validated reply, authoritative current state, product image URLs, and grounded results when applicable | `chat-response.schema.json` |
 | Next turn | Frontend → backend | Updated bounded history and state plus the next message | The loop returns to `chat-request.schema.json` |
 
 ## Sequence diagram
@@ -470,13 +520,11 @@ The schemas reduce ambiguity, but the backend still remains responsible for tran
 
 ## Remaining implementation work
 
-This document describes the target MVP flow. The next code tasks are:
+This document describes the target MVP flow. The framework-independent orchestrator and OpenAI interpreter now exist. The interpreter is tested through mocked network responses because no local API key is configured. The next code tasks are:
 
-1. Build and test deterministic product matching.
-2. Define the backend-to-frontend chat response contract.
-3. Implement the frontend in-memory conversation state.
-4. Implement `POST /api/chat` as the backend orchestrator.
-5. Build and test the model-context formatter.
-6. Connect the LLM with the resolved response schema.
-7. Add controlled fallbacks and conversation error recovery.
-8. Decide later whether durable backend conversation storage is needed.
+1. Implement the Cloudflare `POST /api/chat` HTTP wrapper and inject `OPENAI_API_KEY`, `OPENAI_MODEL`, and the mock catalogue.
+2. Configure the secret in Cloudflare and run one controlled live interpretation request.
+3. Implement the frontend in-memory conversation state and call the deployed API.
+4. Render the returned reply, product images, compatibility evidence, and missing-information state.
+5. Add rate limiting, controlled public fallbacks, and request tracing at the Cloudflare boundary.
+6. Decide later whether durable backend conversation storage is needed.

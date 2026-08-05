@@ -1,0 +1,341 @@
+{
+  "description": "The OpenAI Structured Outputs-compatible form of the LLM response. The result wrapper permits only the supported-search, supported-conversation, or unsupported variants.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "result"
+  ],
+  "properties": {
+    "result": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/supportedSearch"
+        },
+        {
+          "$ref": "#/$defs/supportedConversation"
+        },
+        {
+          "$ref": "#/$defs/unsupported"
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "supportedSearch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requestStatus",
+        "searchReady",
+        "reply",
+        "requirements"
+      ],
+      "properties": {
+        "requestStatus": {
+          "type": "string",
+          "enum": [
+            "supported",
+            "mixed"
+          ]
+        },
+        "searchReady": {
+          "type": "boolean",
+          "enum": [
+            true
+          ]
+        },
+        "reply": {
+          "$ref": "#/$defs/reply"
+        },
+        "requirements": {
+          "$ref": "#/$defs/requirements"
+        }
+      }
+    },
+    "supportedConversation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requestStatus",
+        "searchReady",
+        "reply",
+        "requirements"
+      ],
+      "properties": {
+        "requestStatus": {
+          "type": "string",
+          "enum": [
+            "supported",
+            "mixed"
+          ]
+        },
+        "searchReady": {
+          "type": "boolean",
+          "enum": [
+            false
+          ]
+        },
+        "reply": {
+          "$ref": "#/$defs/reply"
+        },
+        "requirements": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/requirements"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "unsupported": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requestStatus",
+        "searchReady",
+        "reply",
+        "requirements"
+      ],
+      "properties": {
+        "requestStatus": {
+          "type": "string",
+          "enum": [
+            "unsupported"
+          ]
+        },
+        "searchReady": {
+          "type": "boolean",
+          "enum": [
+            false
+          ]
+        },
+        "reply": {
+          "$ref": "#/$defs/reply"
+        },
+        "requirements": {
+          "type": "null"
+        }
+      }
+    },
+    "reply": {
+      "type": "string",
+      "pattern": "^[^<>]*$"
+    },
+    "requirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "garmentTypes",
+        "occasion",
+        "requiredAccess",
+        "excludedAccess",
+        "preferredAccess",
+        "requiredMeasurements"
+      ],
+      "properties": {
+        "garmentTypes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "items": {
+            "$ref": "#/$defs/garmentType"
+          }
+        },
+        "occasion": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "casual",
+                "work",
+                "formal",
+                "wedding_guest",
+                "travel",
+                "exercise",
+                "sleepwear",
+                "unknown"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "requiredAccess": {
+          "$ref": "#/$defs/accessRequirements"
+        },
+        "excludedAccess": {
+          "$ref": "#/$defs/accessRequirements"
+        },
+        "preferredAccess": {
+          "$ref": "#/$defs/accessRequirements"
+        },
+        "requiredMeasurements": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "$ref": "#/$defs/measurementRequirement"
+          }
+        }
+      }
+    },
+    "accessRequirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "closureType",
+        "closureLocation",
+        "dressingMethod",
+        "gripFeature",
+        "openingExtent"
+      ],
+      "properties": {
+        "closureType": {
+          "type": "array",
+          "maxItems": 5,
+          "items": {
+            "type": "string",
+            "enum": [
+              "none",
+              "zip",
+              "buttons",
+              "snaps",
+              "magnetic",
+              "hook_and_loop",
+              "wrap_tie",
+              "drawstring",
+              "buckle",
+              "hook_and_bar"
+            ]
+          }
+        },
+        "closureLocation": {
+          "type": "array",
+          "maxItems": 4,
+          "items": {
+            "type": "string",
+            "enum": [
+              "front",
+              "side",
+              "back",
+              "shoulder",
+              "inseam",
+              "multiple"
+            ]
+          }
+        },
+        "dressingMethod": {
+          "type": "array",
+          "maxItems": 4,
+          "items": {
+            "type": "string",
+            "enum": [
+              "full_front_opening",
+              "partial_front_opening",
+              "overhead",
+              "step_in",
+              "wrap"
+            ]
+          }
+        },
+        "gripFeature": {
+          "type": "array",
+          "maxItems": 4,
+          "items": {
+            "type": "string",
+            "enum": [
+              "ring_pull",
+              "loop_pull",
+              "extended_tab",
+              "large_documented",
+              "none_documented"
+            ]
+          }
+        },
+        "openingExtent": {
+          "type": "array",
+          "maxItems": 2,
+          "items": {
+            "type": "string",
+            "enum": [
+              "full",
+              "partial"
+            ]
+          }
+        }
+      }
+    },
+    "measurementRequirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "minimumCm",
+        "maximumCm"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "chest",
+            "waist",
+            "hip",
+            "shoulder_width",
+            "sleeve_length",
+            "garment_length",
+            "inside_leg",
+            "front_rise",
+            "back_rise"
+          ]
+        },
+        "minimumCm": {
+          "anyOf": [
+            {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 400
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "maximumCm": {
+          "anyOf": [
+            {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 400
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "garmentType": {
+      "type": "string",
+      "enum": [
+        "top",
+        "shirt",
+        "blouse",
+        "dress",
+        "jumpsuit",
+        "trousers",
+        "jeans",
+        "skirt",
+        "shorts",
+        "jacket",
+        "coat",
+        "cardigan",
+        "jumper",
+        "outfit",
+        "unknown"
+      ]
+    }
+  }
+}
