@@ -134,6 +134,19 @@ The backend is the controller of the system. It:
 
 The backend will initially run as a Cloudflare Worker, so the website and private API routes can be deployed through Cloudflare without managing a dedicated server.
 
+### Cloudflare Worker deployment
+
+The implemented Worker exposes `POST /api/chat`. It checks the browser origin, request method, content type, body size, and chat-request schema before calling OpenAI. It then runs the existing orchestration and returns either a validated chat response or a controlled public error. Provider error details and API keys are never returned to the browser.
+
+Cloudflare's Git integration can build and deploy this repository after a push; Wrangler does not have to be installed on the developer's computer. Before deploying:
+
+1. Check that `name` in `wrangler.jsonc` exactly matches the Worker name in the Cloudflare dashboard.
+2. Add `OPENAI_API_KEY` as an encrypted Worker secret in **Settings → Variables and Secrets**.
+3. Add `ALLOWED_ORIGIN` as a Worker variable containing the frontend's exact origin, such as `https://skin-ai.example`. Multiple exact origins can be comma-separated.
+4. Keep `OPENAI_MODEL` as the configured variable or override it in the dashboard.
+
+For optional local Worker testing, copy `.dev.vars.example` to `.dev.vars` and replace its values. `.dev.vars` is ignored by Git and must never be committed.
+
 ### LLM
 
 The LLM is the language interpretation layer. It:

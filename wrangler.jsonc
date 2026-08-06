@@ -1,0 +1,9 @@
+{
+  // This must match the Worker name shown in the Cloudflare dashboard.
+  "name": "skin-ai",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-08-06",
+  "vars": {
+    "OPENAI_MODEL": "gpt-5.6-sol"
+  }
+}

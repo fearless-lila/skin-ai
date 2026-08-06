@@ -6,7 +6,7 @@ It focuses on the conversational search flow. Product matching and virtual try-o
 
 ## Current implementation status
 
-The repository currently contains the schemas, mock catalogue, tested deterministic matcher, tested backend-to-frontend response adapter, tested framework-independent chat orchestrator, and a tested OpenAI Responses API interpreter. It does not yet contain a frontend chat component, a Cloudflare `/api/chat` HTTP handler, a configured server-side API key, a live LLM verification call, or a conversation database.
+The repository currently contains the schemas, mock catalogue, tested deterministic matcher, tested backend-to-frontend response adapter, tested framework-independent chat orchestrator, a tested OpenAI Responses API interpreter, and the Cloudflare `POST /api/chat` HTTP handler. It does not yet contain a frontend chat component, a configured server-side API key, a live LLM verification call, or a conversation database.
 
 The persistence described below is therefore the planned MVP behaviour:
 
@@ -16,10 +16,10 @@ The persistence described below is therefore the planned MVP behaviour:
 
 The schemas define the contracts that the future frontend and backend code must follow. A schema validates data; it does not store, transform, or send data by itself.
 
-The implemented [`handleChatTurn`](../../src/chat/handle-chat-turn.js) function now connects those contracts in plain JavaScript. It is the workflow that a future Cloudflare Worker will call; it is not itself an internet endpoint.
+The implemented [`handleChatTurn`](../../src/chat/handle-chat-turn.js) function connects those contracts in plain JavaScript. The Cloudflare Worker calls it; the function remains independent from the internet endpoint.
 
 ```text
-Cloudflare Worker HTTP handler (not implemented yet)
+Cloudflare Worker `POST /api/chat` handler
         ↓ calls
 handleChatTurn (implemented and tested)
         ↓ coordinates
@@ -206,7 +206,7 @@ The backend checks the object with `chat-request.schema.json` before calling the
 - Product ID references have a valid shape.
 - No unexpected fields or browser-supplied product facts were inserted.
 
-Invalid input stops here and produces a typed internal error. It is not forwarded to the model. The future Cloudflare handler will convert that internal error into a controlled public HTTP response.
+Invalid input stops here and produces a typed internal error. It is not forwarded to the model. The Cloudflare handler converts that internal error into a controlled public HTTP response.
 
 This is the first node in the implemented `handleChatTurn` workflow. The workflow uses explicit functions and one conditional branch rather than a graph framework:
 
@@ -334,7 +334,7 @@ corrected result valid   → continue
 corrected result invalid → stop before matching
 ```
 
-An invalid response is never executed. The future Cloudflare handler will convert the final typed failure into a controlled public response.
+An invalid response is never executed. The Cloudflare handler converts the final typed failure into a controlled public response.
 
 ### Stage 8: the backend decides whether to match products
 
@@ -520,11 +520,10 @@ The schemas reduce ambiguity, but the backend still remains responsible for tran
 
 ## Remaining implementation work
 
-This document describes the target MVP flow. The framework-independent orchestrator and OpenAI interpreter now exist. The interpreter is tested through mocked network responses because no local API key is configured. The next code tasks are:
+This document describes the target MVP flow. The framework-independent orchestrator, OpenAI interpreter, and Cloudflare HTTP handler now exist. They are tested through mocked network responses because no local API key is configured. The next tasks are:
 
-1. Implement the Cloudflare `POST /api/chat` HTTP wrapper and inject `OPENAI_API_KEY`, `OPENAI_MODEL`, and the mock catalogue.
-2. Configure the secret in Cloudflare and run one controlled live interpretation request.
-3. Implement the frontend in-memory conversation state and call the deployed API.
-4. Render the returned reply, product images, compatibility evidence, and missing-information state.
-5. Add rate limiting, controlled public fallbacks, and request tracing at the Cloudflare boundary.
-6. Decide later whether durable backend conversation storage is needed.
+1. Configure `OPENAI_API_KEY` and `ALLOWED_ORIGIN` in Cloudflare and run one controlled live interpretation request.
+2. Implement the frontend in-memory conversation state and call the deployed API.
+3. Render the returned reply, product images, compatibility evidence, and missing-information state.
+4. Add rate limiting and request tracing at the Cloudflare boundary.
+5. Decide later whether durable backend conversation storage is needed.

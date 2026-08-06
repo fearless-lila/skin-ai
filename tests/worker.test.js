@@ -1,0 +1,247 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import {
+  CHAT_API_PATH,
+  MAX_CHAT_REQUEST_BYTES,
+  createWorker
+} from "../src/worker.js";
+
+const allowedOrigin = "https://app.skin-ai.example";
+const silentLogger = { error() {} };
+
+function validChatRequest(overrides = {}) {
+  return {
+    conversationId: "conversation-123",
+    currentMessage: "What does a full front opening mean?",
+    recentMessages: [],
+    conversationState: {
+      currentRequirements: null,
+      lastDisplayedProductIds: [],
+      selectedProductId: null
+    },
+    ...overrides
+  };
+}
+
+function request({
+  path = CHAT_API_PATH,
+  method = "POST",
+  body = validChatRequest(),
+  origin = allowedOrigin,
+  contentType = "application/json"
+} = {}) {
+  const headers = {};
+
+  if (origin) headers.Origin = origin;
+  if (contentType) headers["Content-Type"] = contentType;
+
+  return new Request(`https://api.skin-ai.example${path}`, {
+    method,
+    headers,
+    body: method === "POST" ? JSON.stringify(body) : undefined
+  });
+}
+
+function completedOpenAiResponse(output) {
+  return new Response(
+    JSON.stringify({
+      status: "completed",
+      output: [
+        {
+          type: "message",
+          role: "assistant",
+          content: [
+            {
+              type: "output_text",
+              text: JSON.stringify({ result: output })
+            }
+          ]
+        }
+      ]
+    }),
+    {
+      status: 200,
+      headers: { "Content-Type": "application/json" }
+    }
+  );
+}
+
+function environment(overrides = {}) {
+  return {
+    OPENAI_API_KEY: "server-side-test-key",
+    OPENAI_MODEL: "test-model",
+    ALLOWED_ORIGIN: allowedOrigin,
+    ...overrides
+  };
+}
+
+test("POST /api/chat returns the validated orchestration response", async () => {
+  let providerCalls = 0;
+  const worker = createWorker({
+    logger: silentLogger,
+    fetchImpl: async (_url, options) => {
+      providerCalls += 1;
+      assert.equal(options.headers.Authorization, "Bearer server-side-test-key");
+
+      return completedOpenAiResponse({
+        requestStatus: "supported",
+        searchReady: false,
+        reply: "It means the garment opens completely down the front.",
+        requirements: null
+      });
+    }
+  });
+
+  const response = await worker.fetch(request(), environment());
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("Access-Control-Allow-Origin"), allowedOrigin);
+  assert.equal(response.headers.get("Cache-Control"), "no-store");
+  assert.equal(body.conversationId, "conversation-123");
+  assert.equal(body.searchPerformed, false);
+  assert.equal(body.results, null);
+  assert.equal(providerCalls, 1);
+});
+
+test("rejects invalid chat data before calling OpenAI", async () => {
+  let providerCalls = 0;
+  const worker = createWorker({
+    logger: silentLogger,
+    fetchImpl: async () => {
+      providerCalls += 1;
+      throw new Error("must not be called");
+    }
+  });
+  const response = await worker.fetch(
+    request({ body: validChatRequest({ currentMessage: "" }) }),
+    environment()
+  );
+  const body = await response.json();
+
+  assert.equal(response.status, 400);
+  assert.equal(body.error.code, "INVALID_CHAT_REQUEST");
+  assert.equal(providerCalls, 0);
+});
+
+test("handles CORS preflight for the configured frontend", async () => {
+  const worker = createWorker({ logger: silentLogger });
+  const response = await worker.fetch(
+    request({ method: "OPTIONS", body: null }),
+    environment()
+  );
+
+  assert.equal(response.status, 204);
+  assert.equal(response.headers.get("Access-Control-Allow-Origin"), allowedOrigin);
+  assert.equal(response.headers.get("Access-Control-Allow-Methods"), "POST, OPTIONS");
+});
+
+test("rejects browser requests from an unconfigured origin", async () => {
+  const worker = createWorker({ logger: silentLogger });
+  const response = await worker.fetch(
+    request({ origin: "https://untrusted.example" }),
+    environment()
+  );
+  const body = await response.json();
+
+  assert.equal(response.status, 403);
+  assert.equal(response.headers.get("Access-Control-Allow-Origin"), null);
+  assert.equal(body.error.code, "ORIGIN_NOT_ALLOWED");
+});
+
+test("returns controlled HTTP errors for routing and body failures", async (t) => {
+  const worker = createWorker({ logger: silentLogger });
+
+  await t.test("unknown route", async () => {
+    const response = await worker.fetch(request({ path: "/missing" }), environment());
+    assert.equal(response.status, 404);
+  });
+
+  await t.test("wrong method", async () => {
+    const response = await worker.fetch(
+      request({ method: "GET", body: null }),
+      environment()
+    );
+    assert.equal(response.status, 405);
+    assert.equal(response.headers.get("Allow"), "POST, OPTIONS");
+  });
+
+  await t.test("wrong content type", async () => {
+    const response = await worker.fetch(
+      request({ contentType: "text/plain" }),
+      environment()
+    );
+    assert.equal(response.status, 415);
+  });
+
+  await t.test("malformed JSON", async () => {
+    const malformedRequest = new Request(
+      `https://api.skin-ai.example${CHAT_API_PATH}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: allowedOrigin
+        },
+        body: "{not-json"
+      }
+    );
+    const response = await worker.fetch(malformedRequest, environment());
+    const body = await response.json();
+
+    assert.equal(response.status, 400);
+    assert.equal(body.error.code, "INVALID_JSON");
+  });
+
+  await t.test("oversized body", async () => {
+    const response = await worker.fetch(
+      request({
+        body: validChatRequest({
+          currentMessage: "x".repeat(MAX_CHAT_REQUEST_BYTES)
+        })
+      }),
+      environment()
+    );
+    const body = await response.json();
+
+    assert.equal(response.status, 413);
+    assert.equal(body.error.code, "REQUEST_TOO_LARGE");
+  });
+});
+
+test("does not expose provider failure details", async () => {
+  const worker = createWorker({
+    logger: silentLogger,
+    fetchImpl: async () => {
+      throw new Error("private provider and network details");
+    }
+  });
+
+  const response = await worker.fetch(request(), environment());
+  const responseText = await response.text();
+
+  assert.equal(response.status, 503);
+  assert.match(responseText, /CHAT_TEMPORARILY_UNAVAILABLE/);
+  assert.doesNotMatch(responseText, /private provider/);
+});
+
+test("reports missing browser-origin configuration without calling OpenAI", async () => {
+  let providerCalls = 0;
+  const worker = createWorker({
+    logger: silentLogger,
+    fetchImpl: async () => {
+      providerCalls += 1;
+      throw new Error("must not be called");
+    }
+  });
+  const response = await worker.fetch(
+    request(),
+    environment({ ALLOWED_ORIGIN: undefined })
+  );
+  const body = await response.json();
+
+  assert.equal(response.status, 500);
+  assert.equal(body.error.code, "SERVER_MISCONFIGURED");
+  assert.equal(providerCalls, 0);
+});
