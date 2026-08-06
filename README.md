@@ -134,6 +134,12 @@ The backend is the controller of the system. It:
 
 The backend will initially run as a Cloudflare Worker, so the website and private API routes can be deployed through Cloudflare without managing a dedicated server.
 
+### Local frontend
+
+The repository includes a small accessible browser interface for the chat flow. Run `npm run dev`, then open `http://localhost:3000`. This origin matches the development `ALLOWED_ORIGIN` configured for the Worker.
+
+The frontend stores the bounded conversation context in the browser's `sessionStorage`. It restores that context after a refresh and removes it when the user selects **Start over**. Only the fields permitted by `chat-request.schema.json` are sent to the backend; locally cached product display data is never treated as trusted catalogue input.
+
 ### Cloudflare Worker deployment
 
 The implemented Worker exposes `POST /api/chat`. It checks the browser origin, request method, content type, body size, and chat-request schema before calling OpenAI. It then runs the existing orchestration and returns either a validated chat response or a controlled public error. Provider error details and API keys are never returned to the browser.
