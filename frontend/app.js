@@ -6,6 +6,7 @@ import {
   saveChatSession,
   selectProductForTryOn
 } from "./chat-state.js";
+import { validateTryOnPhoto } from "./photo-selection.js";
 
 const CHAT_API_URL = "https://skin-ai.lilahu21797.workers.dev/api/chat";
 
@@ -19,6 +20,8 @@ const statusRegion = document.querySelector("#request-status");
 const welcomeTemplate = document.querySelector("#welcome-template");
 
 let session = loadChatSession();
+let photoSelection = emptyPhotoSelection();
+let photoValidationGeneration = 0;
 
 renderConversation();
 renderResults(session.displayResults);
@@ -31,6 +34,7 @@ input.addEventListener("keydown", (event) => {
   }
 });
 clearButton.addEventListener("click", () => {
+  resetPhotoSelection();
   session = clearChatSession();
   renderConversation();
   renderResults(null);
@@ -64,7 +68,14 @@ async function handleSubmit(event) {
       );
     }
 
+    const previousSelectedProductId =
+      session.conversationState.selectedProductId;
     session = applyChatResponse(session, currentMessage, body);
+    if (
+      session.conversationState.selectedProductId !== previousSelectedProductId
+    ) {
+      resetPhotoSelection();
+    }
     saveChatSession(session);
     appendMessage("assistant", body.reply);
     renderResults(session.displayResults);
@@ -271,6 +282,9 @@ function createProductCard(result, kind) {
 
 function handleTryOnSelection(product) {
   try {
+    if (session.conversationState.selectedProductId !== product.id) {
+      resetPhotoSelection();
+    }
     session = selectProductForTryOn(session, product);
     saveChatSession(session);
     renderResults(session.displayResults);
@@ -310,15 +324,195 @@ function appendTryOnSelection(results) {
 
   const explanation = document.createElement("p");
   explanation.textContent =
-    "Your product selection is saved for this browser session. No photograph has been requested or uploaded yet.";
+    "Choose a photograph to prepare this virtual try-on. The file stays in this browser tab until a later step explicitly uploads it.";
+
+  const guidance = document.createElement("ul");
+  guidance.id = "try-on-photo-guidance";
+  guidance.className = "photo-guidance";
+  for (const instruction of [
+    "Use a JPG or PNG smaller than 10 MB.",
+    "Include one person, facing forward, with the full body clearly visible.",
+    "Use a clear, well-lit photograph without major obstructions."
+  ]) {
+    const item = document.createElement("li");
+    item.textContent = instruction;
+    guidance.append(item);
+  }
 
   const disclaimer = document.createElement("p");
   disclaimer.className = "selection-disclaimer";
   disclaimer.textContent =
     "Virtual try-on will provide a visual preview only, not proof of physical fit.";
 
-  panel.append(label, heading, explanation, disclaimer);
+  const form = buildPhotoPreparationForm();
+  panel.append(label, heading, explanation, guidance, form, disclaimer);
   resultsRegion.append(panel);
+}
+
+function buildPhotoPreparationForm() {
+  const form = document.createElement("form");
+  form.className = "photo-form";
+
+  const inputLabel = document.createElement("label");
+  inputLabel.htmlFor = "try-on-photo";
+  inputLabel.textContent = photoSelection.file
+    ? "Choose a different photograph"
+    : "Choose your photograph";
+
+  const input = document.createElement("input");
+  input.id = "try-on-photo";
+  input.className = "photo-input";
+  input.type = "file";
+  input.accept = "image/jpeg,image/png";
+  input.setAttribute("aria-describedby", "try-on-photo-guidance photo-error");
+  input.addEventListener("change", () => {
+    void handlePhotoChange(input.files?.[0] ?? null);
+  });
+
+  form.append(inputLabel, input);
+
+  if (photoSelection.error) {
+    const error = document.createElement("p");
+    error.id = "photo-error";
+    error.className = "photo-error";
+    error.tabIndex = -1;
+    error.setAttribute("role", "alert");
+    error.textContent = photoSelection.error;
+    form.append(error);
+  } else {
+    const emptyError = document.createElement("span");
+    emptyError.id = "photo-error";
+    emptyError.hidden = true;
+    form.append(emptyError);
+  }
+
+  if (!photoSelection.file) return form;
+
+  const preview = document.createElement("div");
+  preview.className = "photo-preview";
+
+  const image = document.createElement("img");
+  image.src = photoSelection.previewUrl;
+  image.alt = "Preview of the selected virtual try-on photograph";
+
+  const details = document.createElement("div");
+  const filename = document.createElement("p");
+  filename.className = "photo-filename";
+  filename.textContent = photoSelection.file.name;
+  const metadata = document.createElement("p");
+  metadata.className = "photo-metadata";
+  metadata.textContent = `${photoSelection.width} × ${photoSelection.height} pixels · ${formatFileSize(photoSelection.file.size)}`;
+  details.append(filename, metadata);
+  preview.append(image, details);
+
+  const consentRow = document.createElement("div");
+  consentRow.className = "consent-row";
+  const consent = document.createElement("input");
+  consent.id = "try-on-consent";
+  consent.type = "checkbox";
+  consent.checked = photoSelection.consentGiven;
+  const consentLabel = document.createElement("label");
+  consentLabel.htmlFor = "try-on-consent";
+  consentLabel.textContent =
+    "I consent to this photograph being sent to YouCam for the virtual try-on when I continue to the upload step.";
+  consentRow.append(consent, consentLabel);
+
+  const confirm = document.createElement("button");
+  confirm.className = "confirm-photo-button";
+  confirm.type = "submit";
+  confirm.disabled = !photoSelection.consentGiven;
+  confirm.textContent = photoSelection.confirmed
+    ? "Photo confirmed"
+    : "Confirm photo";
+
+  consent.addEventListener("change", () => {
+    photoSelection.consentGiven = consent.checked;
+    photoSelection.confirmed = false;
+    confirm.disabled = !consent.checked;
+    confirm.textContent = "Confirm photo";
+    form.querySelector(".photo-ready")?.remove();
+  });
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (!photoSelection.file || !photoSelection.consentGiven) return;
+
+    photoSelection.confirmed = true;
+    renderResults(session.displayResults);
+    setStatus("Photo confirmed. It has not been uploaded.");
+    document.querySelector("#try-on-selection")?.focus();
+  });
+
+  form.append(preview, consentRow, confirm);
+
+  if (photoSelection.confirmed) {
+    const ready = document.createElement("p");
+    ready.className = "photo-ready";
+    ready.textContent =
+      "Photo ready for the next step. It remains only in this open browser tab and has not been uploaded.";
+    form.append(ready);
+  }
+
+  return form;
+}
+
+async function handlePhotoChange(file) {
+  resetPhotoSelection();
+  const validationGeneration = photoValidationGeneration;
+  if (!file) {
+    renderResults(session.displayResults);
+    return;
+  }
+
+  setStatus("Checking the selected photograph…");
+  const validation = await validateTryOnPhoto(file);
+
+  if (validationGeneration !== photoValidationGeneration) return;
+
+  if (!validation.valid) {
+    photoSelection.error = validation.error;
+    renderResults(session.displayResults);
+    setStatus("The selected photograph cannot be used.");
+    document.querySelector("#photo-error")?.focus();
+    return;
+  }
+
+  photoSelection = {
+    file,
+    previewUrl: URL.createObjectURL(file),
+    width: validation.width,
+    height: validation.height,
+    consentGiven: false,
+    confirmed: false,
+    error: null
+  };
+  renderResults(session.displayResults);
+  setStatus("Photograph selected. Review the consent statement to continue.");
+  document.querySelector("#try-on-selection")?.focus();
+}
+
+function emptyPhotoSelection() {
+  return {
+    file: null,
+    previewUrl: null,
+    width: null,
+    height: null,
+    consentGiven: false,
+    confirmed: false,
+    error: null
+  };
+}
+
+function resetPhotoSelection() {
+  photoValidationGeneration += 1;
+  if (photoSelection.previewUrl) {
+    URL.revokeObjectURL(photoSelection.previewUrl);
+  }
+  photoSelection = emptyPhotoSelection();
+}
+
+function formatFileSize(bytes) {
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function formatPrice(price) {

@@ -435,6 +435,125 @@ h1 {
   font-weight: 700;
 }
 
+.photo-guidance {
+  margin: 15px 0 20px;
+  padding-left: 20px;
+  color: #3f5c49;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.photo-form {
+  max-width: 720px;
+  margin: 18px 0;
+  padding: 18px;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 68%);
+}
+
+.photo-form > label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 850;
+}
+
+.photo-input {
+  width: 100%;
+  min-height: 46px;
+  color: var(--ink);
+}
+
+.photo-input::file-selector-button {
+  min-height: 42px;
+  margin-right: 10px;
+  padding: 0 14px;
+  border: 1px solid var(--plum);
+  border-radius: 10px;
+  color: var(--plum);
+  background: white;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.photo-preview {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid #bfd1c3;
+  border-radius: 12px;
+  background: white;
+}
+
+.photo-preview img {
+  width: 90px;
+  height: 110px;
+  border-radius: 9px;
+  object-fit: cover;
+}
+
+.photo-filename {
+  overflow-wrap: anywhere;
+  font-weight: 850;
+}
+
+.photo-metadata {
+  margin-top: 4px !important;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.photo-error {
+  margin-top: 10px !important;
+  color: #8b2f25;
+  font-weight: 750;
+}
+
+.consent-row {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.consent-row input {
+  width: 20px;
+  height: 20px;
+  margin: 2px 0 0;
+  accent-color: var(--plum);
+}
+
+.consent-row label {
+  line-height: 1.5;
+}
+
+.confirm-photo-button {
+  min-height: 46px;
+  padding: 0 17px;
+  border: 0;
+  border-radius: 12px;
+  color: white;
+  background: var(--plum);
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.confirm-photo-button:hover:not(:disabled) {
+  background: var(--plum-dark);
+}
+
+.photo-ready {
+  margin-top: 14px !important;
+  padding: 11px 13px;
+  border-left: 4px solid var(--sage-dark);
+  color: var(--sage-dark);
+  background: white;
+  font-weight: 750;
+}
+
 .empty-results {
   margin: 0;
   padding-bottom: 28px;
