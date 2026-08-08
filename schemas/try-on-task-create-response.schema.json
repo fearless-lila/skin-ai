@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skin-ai:schema:try-on-task-create-response:v1",
+  "title": "Skin AI virtual try-on task creation response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "selectedProductId",
+    "taskId",
+    "status"
+  ],
+  "properties": {
+    "selectedProductId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "taskId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "pattern": "^[A-Za-z0-9_-]+$"
+    },
+    "status": {
+      "const": "processing"
+    }
+  }
+}

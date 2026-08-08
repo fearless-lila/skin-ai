@@ -373,15 +373,15 @@ YouCam processes tasks asynchronously, so the generated image is not returned im
 | YouCam File API | Issue the temporary upload destination and `file_id` for the user photograph. |
 | YouCam Clothes task API | Combine the photograph reference and garment reference into one processing job and return a `task_id`. |
 
-Backend routes (the first one is now implemented; task creation and status are next):
+Implemented backend routes:
 
 ```text
-POST /api/try-on/upload          implemented: create signed photo upload
-POST /api/try-on/tasks           planned: create YouCam try-on task
-GET  /api/try-on/tasks/:taskId   planned: check task status
+POST /api/try-on/upload          create signed photo upload
+POST /api/try-on/tasks           create a paired YouCam try-on task
+GET  /api/try-on/tasks/:taskId   check processing status and return the result
 ```
 
-The actual image upload may go directly from the browser to the temporary signed upload URL. Creating upload URLs, creating tasks, and checking status still go through the backend.
+The actual photograph upload goes directly from the browser to the temporary signed upload URL. Creating upload URLs, creating tasks, and checking status still go through the backend. The frontend keeps the task ID when a status check times out or encounters a temporary network error, allowing it to resume polling without starting another generation.
 
 ## Security and privacy rules
 

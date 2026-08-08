@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skin-ai:schema:try-on-task-request:v1",
+  "title": "Skin AI virtual try-on task request",
+  "description": "The uploaded user-photo reference and selected trusted catalogue product used to start one YouCam generation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "selectedProductId",
+    "fileId"
+  ],
+  "properties": {
+    "selectedProductId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "fileId": {
+      "description": "Opaque YouCam file identifier returned after the user photograph upload was prepared.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    }
+  }
+}

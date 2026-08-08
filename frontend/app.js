@@ -8,10 +8,17 @@ import {
 } from "./chat-state.js";
 import { validateTryOnPhoto } from "./photo-selection.js";
 import { uploadTryOnPhoto } from "./try-on-upload.js";
+import {
+  TryOnGenerationError,
+  createTryOnTask,
+  waitForTryOnResult
+} from "./try-on-task.js";
 
 const CHAT_API_URL = "https://skin-ai.lilahu21797.workers.dev/api/chat";
 const TRY_ON_UPLOAD_API_URL =
   "https://skin-ai.lilahu21797.workers.dev/api/try-on/upload";
+const TRY_ON_TASKS_API_URL =
+  "https://skin-ai.lilahu21797.workers.dev/api/try-on/tasks";
 
 const form = document.querySelector("#chat-form");
 const input = document.querySelector("#message-input");
@@ -26,6 +33,7 @@ let session = loadChatSession();
 let photoSelection = emptyPhotoSelection();
 let photoValidationGeneration = 0;
 let photoUploadController = null;
+let tryOnTaskController = null;
 
 renderConversation();
 renderResults(session.displayResults);
@@ -348,12 +356,12 @@ function appendTryOnSelection(results) {
   disclaimer.textContent =
     "Virtual try-on will provide a visual preview only, not proof of physical fit.";
 
-  const form = buildPhotoPreparationForm();
+  const form = buildPhotoPreparationForm(selectedResult.product);
   panel.append(label, heading, explanation, guidance, form, disclaimer);
   resultsRegion.append(panel);
 }
 
-function buildPhotoPreparationForm() {
+function buildPhotoPreparationForm(selectedProduct) {
   const form = document.createElement("form");
   form.className = "photo-form";
 
@@ -439,6 +447,7 @@ function buildPhotoPreparationForm() {
     photoSelection.consentGiven = consent.checked;
     photoSelection.uploaded = false;
     photoSelection.fileId = null;
+    resetGenerationState();
     confirm.disabled = !consent.checked;
     confirm.textContent = "Upload photograph";
     form.querySelector(".photo-ready")?.remove();
@@ -455,8 +464,9 @@ function buildPhotoPreparationForm() {
     const ready = document.createElement("p");
     ready.className = "photo-ready";
     ready.textContent =
-      "Photograph uploaded securely. It is ready to be paired with the selected garment in the next step.";
+      "Photograph uploaded securely. It is ready to be paired with the selected garment.";
     form.append(ready);
+    form.append(buildGenerationPanel(selectedProduct));
   }
 
   return form;
@@ -492,6 +502,10 @@ async function handlePhotoChange(file) {
     uploading: false,
     uploaded: false,
     fileId: null,
+    taskId: null,
+    generationStatus: "idle",
+    generationError: null,
+    resultUrl: null,
     error: null
   };
   renderResults(session.displayResults);
@@ -509,6 +523,10 @@ function emptyPhotoSelection() {
     uploading: false,
     uploaded: false,
     fileId: null,
+    taskId: null,
+    generationStatus: "idle",
+    generationError: null,
+    resultUrl: null,
     error: null
   };
 }
@@ -517,10 +535,21 @@ function resetPhotoSelection() {
   photoValidationGeneration += 1;
   photoUploadController?.abort();
   photoUploadController = null;
+  tryOnTaskController?.abort();
+  tryOnTaskController = null;
   if (photoSelection.previewUrl) {
     URL.revokeObjectURL(photoSelection.previewUrl);
   }
   photoSelection = emptyPhotoSelection();
+}
+
+function resetGenerationState() {
+  tryOnTaskController?.abort();
+  tryOnTaskController = null;
+  photoSelection.taskId = null;
+  photoSelection.generationStatus = "idle";
+  photoSelection.generationError = null;
+  photoSelection.resultUrl = null;
 }
 
 async function handlePhotoUpload() {
@@ -573,6 +602,147 @@ async function handlePhotoUpload() {
       renderResults(session.displayResults);
       document.querySelector(
         photoSelection.error ? "#photo-error" : "#try-on-selection"
+      )?.focus();
+    }
+  }
+}
+
+function buildGenerationPanel(selectedProduct) {
+  const panel = document.createElement("section");
+  panel.className = "generation-panel";
+  panel.setAttribute("aria-labelledby", "generation-heading");
+
+  const heading = document.createElement("h4");
+  heading.id = "generation-heading";
+  heading.textContent = photoSelection.resultUrl
+    ? "Your virtual try-on preview"
+    : "Generate the preview";
+  panel.append(heading);
+
+  if (photoSelection.resultUrl) {
+    const resultImage = document.createElement("img");
+    resultImage.className = "try-on-result-image";
+    resultImage.src = photoSelection.resultUrl;
+    resultImage.alt =
+      `AI-generated virtual try-on preview using ${selectedProduct.name}`;
+    resultImage.referrerPolicy = "no-referrer";
+
+    const resultNote = document.createElement("p");
+    resultNote.className = "try-on-result-note";
+    resultNote.textContent =
+      "This AI-generated image is a visual approximation. It does not confirm garment measurements, comfort or physical fit.";
+    panel.append(resultImage, resultNote);
+    return panel;
+  }
+
+  const explanation = document.createElement("p");
+  explanation.textContent =
+    "Generating pairs the uploaded photograph with this garment and starts one YouCam processing task.";
+
+  const generateButton = document.createElement("button");
+  generateButton.className = "generate-try-on-button";
+  generateButton.type = "button";
+  generateButton.disabled = photoSelection.generationStatus === "processing";
+  generateButton.textContent =
+    photoSelection.generationStatus === "processing"
+      ? "Generating preview…"
+      : photoSelection.taskId
+        ? "Check result again"
+        : photoSelection.generationStatus === "failed"
+          ? "Try generation again"
+          : "Generate virtual try-on";
+  generateButton.addEventListener("click", () => {
+    void handleTryOnGeneration();
+  });
+  panel.append(explanation, generateButton);
+
+  if (photoSelection.generationStatus === "processing") {
+    const progress = document.createElement("p");
+    progress.className = "generation-progress";
+    progress.setAttribute("role", "status");
+    progress.textContent =
+      "YouCam is generating the preview. This can take a little while.";
+    panel.append(progress);
+  }
+
+  if (photoSelection.generationError) {
+    const error = document.createElement("p");
+    error.id = "generation-error";
+    error.className = "generation-error";
+    error.tabIndex = -1;
+    error.setAttribute("role", "alert");
+    error.textContent = photoSelection.generationError;
+    panel.append(error);
+  }
+
+  return panel;
+}
+
+async function handleTryOnGeneration() {
+  const selectedProductId = session.conversationState.selectedProductId;
+  if (
+    !selectedProductId ||
+    !photoSelection.uploaded ||
+    !photoSelection.fileId ||
+    photoSelection.generationStatus === "processing" ||
+    photoSelection.resultUrl
+  ) {
+    return;
+  }
+
+  const controller = new AbortController();
+  tryOnTaskController = controller;
+  photoSelection.generationStatus = "processing";
+  photoSelection.generationError = null;
+  renderResults(session.displayResults);
+  setStatus("Creating the virtual try-on preview…");
+
+  try {
+    if (!photoSelection.taskId) {
+      const createdTask = await createTryOnTask({
+        tasksApiUrl: TRY_ON_TASKS_API_URL,
+        selectedProductId,
+        fileId: photoSelection.fileId,
+        signal: controller.signal
+      });
+
+      if (tryOnTaskController !== controller) return;
+      photoSelection.taskId = createdTask.taskId;
+    }
+
+    const result = await waitForTryOnResult({
+      tasksApiUrl: TRY_ON_TASKS_API_URL,
+      taskId: photoSelection.taskId,
+      signal: controller.signal
+    });
+
+    if (tryOnTaskController !== controller) return;
+
+    photoSelection.generationStatus = "succeeded";
+    photoSelection.resultUrl = result.resultUrl;
+    setStatus("Virtual try-on preview generated.");
+  } catch (error) {
+    if (error?.name === "AbortError" || tryOnTaskController !== controller) {
+      return;
+    }
+
+    if (error instanceof TryOnGenerationError && error.terminal) {
+      photoSelection.taskId = null;
+    }
+    photoSelection.generationStatus = "failed";
+    photoSelection.generationError =
+      error instanceof Error
+        ? error.message
+        : "The virtual try-on could not be generated. Please try again.";
+    setStatus("The virtual try-on preview could not be completed.");
+  } finally {
+    if (tryOnTaskController === controller) {
+      tryOnTaskController = null;
+      renderResults(session.displayResults);
+      document.querySelector(
+        photoSelection.generationError
+          ? "#generation-error"
+          : "#try-on-selection"
       )?.focus();
     }
   }

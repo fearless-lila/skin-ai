@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   CHAT_API_PATH,
   MAX_CHAT_REQUEST_BYTES,
+  TRY_ON_TASKS_API_PATH,
   TRY_ON_UPLOAD_API_PATH,
   createWorker
 } from "../src/worker.js";
@@ -34,6 +35,14 @@ function validTryOnUploadRequest(overrides = {}) {
       contentType: "image/jpeg",
       size: 1234
     },
+    ...overrides
+  };
+}
+
+function validTryOnTaskRequest(overrides = {}) {
+  return {
+    selectedProductId: "mock-dress-001",
+    fileId: "uploaded/user+photo/id",
     ...overrides
   };
 }
@@ -241,6 +250,107 @@ test("try-on upload reports missing YouCam configuration safely", async () => {
   assert.doesNotMatch(JSON.stringify(body), /API key/);
 });
 
+test("POST /api/try-on/tasks creates a task with the trusted garment", async () => {
+  const worker = createWorker({
+    logger: silentLogger,
+    fetchImpl: async (url, options) => {
+      assert.match(url, /\/s2s\/v2\.0\/task\/cloth-v3$/);
+      assert.equal(options.headers.Authorization, "Bearer server-side-youcam-key");
+      assert.deepEqual(JSON.parse(options.body), {
+        src_file_id: "uploaded/user+photo/id",
+        ref_file_url:
+          "https://skin-ai.pages.dev/images/avery-front-zip-dress.png",
+        garment_category: "full_body"
+      });
+      return new Response(
+        JSON.stringify({
+          status: 200,
+          data: { task_id: "youcam_task-123" }
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+  });
+
+  const response = await worker.fetch(
+    request({ path: TRY_ON_TASKS_API_PATH, body: validTryOnTaskRequest() }),
+    environment()
+  );
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), {
+    selectedProductId: "mock-dress-001",
+    taskId: "youcam_task-123",
+    status: "processing"
+  });
+});
+
+test("GET /api/try-on/tasks/:taskId returns the generated result", async () => {
+  const worker = createWorker({
+    logger: silentLogger,
+    fetchImpl: async (url, options) => {
+      assert.match(url, /\/s2s\/v2\.0\/task\/cloth-v3\/youcam_task-123$/);
+      assert.equal(options.method, "GET");
+      return new Response(
+        JSON.stringify({
+          status: 200,
+          data: {
+            task_status: "success",
+            error: null,
+            results: {
+              url: "https://results.example/generated.jpg?temporary=1"
+            }
+          }
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+  });
+
+  const response = await worker.fetch(
+    request({
+      path: `${TRY_ON_TASKS_API_PATH}/youcam_task-123`,
+      method: "GET",
+      body: null,
+      contentType: null
+    }),
+    environment()
+  );
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), {
+    taskId: "youcam_task-123",
+    status: "succeeded",
+    resultUrl: "https://results.example/generated.jpg?temporary=1",
+    error: null
+  });
+});
+
+test("try-on task creation rejects browser-supplied garment data before YouCam", async () => {
+  let providerCalls = 0;
+  const worker = createWorker({
+    logger: silentLogger,
+    fetchImpl: async () => {
+      providerCalls += 1;
+      throw new Error("must not be called");
+    }
+  });
+  const response = await worker.fetch(
+    request({
+      path: TRY_ON_TASKS_API_PATH,
+      body: {
+        ...validTryOnTaskRequest(),
+        ref_file_url: "https://attacker.example/garment.png"
+      }
+    }),
+    environment()
+  );
+
+  assert.equal(response.status, 400);
+  assert.equal((await response.json()).error.code, "INVALID_TRY_ON_TASK_REQUEST");
+  assert.equal(providerCalls, 0);
+});
+
 test("rejects invalid chat data before calling OpenAI", async () => {
   let providerCalls = 0;
   const worker = createWorker({
@@ -270,7 +380,10 @@ test("handles CORS preflight for the configured frontend", async () => {
 
   assert.equal(response.status, 204);
   assert.equal(response.headers.get("Access-Control-Allow-Origin"), allowedOrigin);
-  assert.equal(response.headers.get("Access-Control-Allow-Methods"), "POST, OPTIONS");
+  assert.equal(
+    response.headers.get("Access-Control-Allow-Methods"),
+    "GET, POST, OPTIONS"
+  );
 });
 
 test("rejects browser requests from an unconfigured origin", async () => {

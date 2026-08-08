@@ -21,12 +21,20 @@ import {
   YouCamUploadError,
   createYouCamUploadRequester
 } from "./try-on/request-youcam-upload.js";
+import {
+  TryOnTaskError,
+  handleTryOnTaskCreate,
+  handleTryOnTaskStatus
+} from "./try-on/handle-try-on-task.js";
+import {
+  YouCamTaskProviderError,
+  createYouCamTaskClient
+} from "./try-on/request-youcam-task.js";
 
 export const CHAT_API_PATH = "/api/chat";
 export const TRY_ON_UPLOAD_API_PATH = "/api/try-on/upload";
+export const TRY_ON_TASKS_API_PATH = "/api/try-on/tasks";
 export const MAX_CHAT_REQUEST_BYTES = 32 * 1024;
-
-const API_PATHS = new Set([CHAT_API_PATH, TRY_ON_UPLOAD_API_PATH]);
 
 /**
  * Build a Worker around injectable boundaries so the HTTP behaviour can be
@@ -40,8 +48,9 @@ export function createWorker({
   return {
     async fetch(request, env = {}) {
       const url = new URL(request.url);
+      const route = resolveApiRoute(url.pathname);
 
-      if (!API_PATHS.has(url.pathname)) {
+      if (!route) {
         return jsonResponse(
           404,
           publicError("NOT_FOUND", "This API route does not exist.")
@@ -58,8 +67,8 @@ export function createWorker({
               ? "SERVER_MISCONFIGURED"
               : "ORIGIN_NOT_ALLOWED",
             cors.missingConfiguration
-              ? "The chat service is not configured for browser requests."
-              : "This website is not allowed to call the chat service."
+              ? "The API service is not configured for browser requests."
+              : "This website is not allowed to call the API service."
           ),
           cors.headers
         );
@@ -72,18 +81,22 @@ export function createWorker({
         });
       }
 
-      if (request.method !== "POST") {
+      if (!route.methods.includes(request.method)) {
+        const expectedMethod = route.methods[0];
         return jsonResponse(
           405,
-          publicError("METHOD_NOT_ALLOWED", "Use POST for this API route."),
+          publicError(
+            "METHOD_NOT_ALLOWED",
+            `Use ${expectedMethod} for this API route.`
+          ),
           {
             ...cors.headers,
-            Allow: "POST, OPTIONS"
+            Allow: `${route.methods.join(", ")}, OPTIONS`
           }
         );
       }
 
-      if (!isJsonRequest(request)) {
+      if (request.method === "POST" && !isJsonRequest(request)) {
         return jsonResponse(
           415,
           publicError(
@@ -94,27 +107,29 @@ export function createWorker({
         );
       }
 
-      let requestBody;
+      let requestBody = null;
 
-      try {
-        requestBody = await readJsonRequest(request);
-      } catch (error) {
-        const tooLarge = error instanceof RequestTooLargeError;
+      if (request.method === "POST") {
+        try {
+          requestBody = await readJsonRequest(request);
+        } catch (error) {
+          const tooLarge = error instanceof RequestTooLargeError;
 
-        return jsonResponse(
-          tooLarge ? 413 : 400,
-          publicError(
-            tooLarge ? "REQUEST_TOO_LARGE" : "INVALID_JSON",
-            tooLarge
-              ? "The request is too large."
-              : "The request body is not valid JSON."
-          ),
-          cors.headers
-        );
+          return jsonResponse(
+            tooLarge ? 413 : 400,
+            publicError(
+              tooLarge ? "REQUEST_TOO_LARGE" : "INVALID_JSON",
+              tooLarge
+                ? "The request is too large."
+                : "The request body is not valid JSON."
+            ),
+            cors.headers
+          );
+        }
       }
 
       try {
-        if (url.pathname === TRY_ON_UPLOAD_API_PATH) {
+        if (route.kind === "try-on-upload") {
           const requestProviderUpload = createYouCamUploadRequester({
             apiKey: env.YOUCAM_API_KEY,
             fetchImpl
@@ -122,6 +137,31 @@ export function createWorker({
           const response = await handleTryOnUpload(requestBody, {
             catalogue,
             requestProviderUpload
+          });
+
+          return jsonResponse(200, response, cors.headers);
+        }
+
+        if (route.kind === "try-on-task-create") {
+          const youCamTaskClient = createYouCamTaskClient({
+            apiKey: env.YOUCAM_API_KEY,
+            fetchImpl
+          });
+          const response = await handleTryOnTaskCreate(requestBody, {
+            catalogue,
+            createProviderTask: youCamTaskClient.createTask
+          });
+
+          return jsonResponse(200, response, cors.headers);
+        }
+
+        if (route.kind === "try-on-task-status") {
+          const youCamTaskClient = createYouCamTaskClient({
+            apiKey: env.YOUCAM_API_KEY,
+            fetchImpl
+          });
+          const response = await handleTryOnTaskStatus(route.taskId, {
+            getProviderTask: youCamTaskClient.getTask
           });
 
           return jsonResponse(200, response, cors.headers);
@@ -184,7 +224,7 @@ function resolveCors(request, configuredOrigins) {
   const requestOrigin = request.headers.get("Origin");
   const headers = {
     "Access-Control-Allow-Headers": "Content-Type",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Max-Age": "86400",
     Vary: "Origin"
   };
@@ -216,7 +256,82 @@ function resolveCors(request, configuredOrigins) {
   };
 }
 
+function resolveApiRoute(pathname) {
+  if (pathname === CHAT_API_PATH) {
+    return { kind: "chat", methods: ["POST"] };
+  }
+
+  if (pathname === TRY_ON_UPLOAD_API_PATH) {
+    return { kind: "try-on-upload", methods: ["POST"] };
+  }
+
+  if (pathname === TRY_ON_TASKS_API_PATH) {
+    return { kind: "try-on-task-create", methods: ["POST"] };
+  }
+
+  const statusMatch = pathname.match(
+    /^\/api\/try-on\/tasks\/([A-Za-z0-9_-]{1,1024})$/
+  );
+
+  return statusMatch
+    ? {
+        kind: "try-on-task-status",
+        methods: ["GET"],
+        taskId: statusMatch[1]
+      }
+    : null;
+}
+
 function mapPublicError(error) {
+  if (
+    error instanceof TryOnTaskError &&
+    ["INVALID_TRY_ON_TASK_REQUEST", "INVALID_TRY_ON_TASK_ID"].includes(
+      error.code
+    )
+  ) {
+    return {
+      status: 400,
+      code: error.code,
+      message: "The virtual try-on task request is invalid."
+    };
+  }
+
+  if (
+    error instanceof TryOnTaskError &&
+    error.code === "UNKNOWN_PRODUCT_REFERENCE"
+  ) {
+    return {
+      status: 400,
+      code: "UNKNOWN_PRODUCT_REFERENCE",
+      message: "The selected product is no longer available."
+    };
+  }
+
+  if (
+    error instanceof TryOnTaskError &&
+    error.code === "VIRTUAL_TRY_ON_UNAVAILABLE"
+  ) {
+    return {
+      status: 409,
+      code: "VIRTUAL_TRY_ON_UNAVAILABLE",
+      message: "This product is not available for virtual try-on."
+    };
+  }
+
+  if (
+    error instanceof YouCamTaskProviderError ||
+    (error instanceof TryOnTaskError &&
+      ["TASK_PROVIDER_FAILED", "INVALID_TASK_PROVIDER_RESPONSE"].includes(
+        error.code
+      ))
+  ) {
+    return {
+      status: 503,
+      code: "TRY_ON_TEMPORARILY_UNAVAILABLE",
+      message: "The virtual try-on service is unavailable. Please try again."
+    };
+  }
+
   if (
     error instanceof TryOnUploadError &&
     error.code === "INVALID_TRY_ON_UPLOAD_REQUEST"
