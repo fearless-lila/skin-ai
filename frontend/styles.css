@@ -272,6 +272,11 @@ h1 {
   background: white;
 }
 
+.product-card.selected {
+  border-color: var(--plum);
+  box-shadow: 0 0 0 2px rgb(80 50 86 / 18%);
+}
+
 .product-image-frame {
   position: relative;
   min-height: 260px;
@@ -351,13 +356,83 @@ h1 {
   margin-top: 6px;
 }
 
+.product-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
 .product-link {
   display: inline-block;
-  margin-top: 5px;
   color: var(--plum);
   font-size: 0.83rem;
   font-weight: 800;
   text-underline-offset: 3px;
+}
+
+.try-on-button {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 12px;
+  color: white;
+  background: var(--plum);
+  font-size: 0.83rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.try-on-button:hover {
+  background: var(--plum-dark);
+}
+
+.try-on-button[aria-pressed="true"] {
+  color: var(--sage-dark);
+  background: var(--sage);
+}
+
+.try-on-selection {
+  margin: 30px clamp(20px, 4vw, 42px) 0;
+  padding: 22px;
+  border: 1px solid #bfd1c3;
+  border-radius: 18px;
+  background: var(--sage);
+}
+
+.try-on-selection:focus {
+  outline: 3px solid var(--coral);
+  outline-offset: 3px;
+}
+
+.try-on-selection h3 {
+  margin: 3px 0 8px;
+  font-family: Georgia, serif;
+  font-size: 1.55rem;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+}
+
+.try-on-selection p {
+  max-width: 680px;
+  margin: 0;
+  line-height: 1.55;
+}
+
+.selection-label {
+  color: var(--sage-dark);
+  font-size: 0.74rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.selection-disclaimer {
+  margin-top: 10px !important;
+  color: #3f5c49;
+  font-size: 0.82rem;
+  font-weight: 700;
 }
 
 .empty-results {

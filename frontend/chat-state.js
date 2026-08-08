@@ -80,6 +80,24 @@ export function clearChatSession(storage = globalThis.sessionStorage) {
   return createEmptyChatSession();
 }
 
+export function selectProductForTryOn(session, product) {
+  if (!product || product.virtualTryOnAvailable !== true) {
+    throw new TypeError("This product is not available for virtual try-on.");
+  }
+
+  if (!session.conversationState.lastDisplayedProductIds.includes(product.id)) {
+    throw new TypeError("The selected product is not in the current results.");
+  }
+
+  return {
+    ...session,
+    conversationState: {
+      ...session.conversationState,
+      selectedProductId: product.id
+    }
+  };
+}
+
 function appendBoundedMessages(existingMessages, newMessages) {
   return [...existingMessages, ...newMessages].slice(-MAX_RECENT_MESSAGES);
 }

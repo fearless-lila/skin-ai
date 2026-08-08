@@ -3,7 +3,8 @@ import {
   buildChatRequest,
   clearChatSession,
   loadChatSession,
-  saveChatSession
+  saveChatSession,
+  selectProductForTryOn
 } from "./chat-state.js";
 
 const CHAT_API_URL = "https://skin-ai.lilahu21797.workers.dev/api/chat";
@@ -159,6 +160,8 @@ function renderResults(results) {
       "No catalogue items met these requirements. Try changing one preference or requirement.";
     resultsRegion.append(empty);
   }
+
+  appendTryOnSelection(results);
 }
 
 function appendProductGroup(title, products, kind) {
@@ -180,8 +183,11 @@ function appendProductGroup(title, products, kind) {
 
 function createProductCard(result, kind) {
   const { product, compatibility } = result;
+  const isSelected =
+    session.conversationState.selectedProductId === product.id;
   const card = document.createElement("article");
   card.className = "product-card";
+  card.classList.toggle("selected", isSelected);
 
   const imageFrame = document.createElement("div");
   imageFrame.className = "product-image-frame";
@@ -242,11 +248,77 @@ function createProductCard(result, kind) {
   link.rel = "noreferrer";
   link.textContent = "View product details";
 
+  const actions = document.createElement("div");
+  actions.className = "product-actions";
+  actions.append(link);
+
+  if (product.virtualTryOnAvailable === true) {
+    const tryOnButton = document.createElement("button");
+    tryOnButton.className = "try-on-button";
+    tryOnButton.type = "button";
+    tryOnButton.setAttribute("aria-pressed", String(isSelected));
+    tryOnButton.textContent = isSelected ? "Selected for try-on" : "Try this on";
+    tryOnButton.addEventListener("click", () => handleTryOnSelection(product));
+    actions.append(tryOnButton);
+  }
+
   content.append(badge, name, retailer, price, sizes);
   if (facts.childElementCount) content.append(facts);
-  content.append(link);
+  content.append(actions);
   card.append(imageFrame, content);
   return card;
+}
+
+function handleTryOnSelection(product) {
+  try {
+    session = selectProductForTryOn(session, product);
+    saveChatSession(session);
+    renderResults(session.displayResults);
+    setStatus(`${product.name} selected for virtual try-on.`);
+    document.querySelector("#try-on-selection")?.focus();
+  } catch (error) {
+    setStatus(
+      error instanceof Error ? error.message : "This product could not be selected."
+    );
+  }
+}
+
+function appendTryOnSelection(results) {
+  const selectedProductId = session.conversationState.selectedProductId;
+  if (!selectedProductId) return;
+
+  const selectedResult = [
+    ...(results.compatibleProducts ?? []),
+    ...(results.productsWithMissingInformation ?? [])
+  ].find(({ product }) => product.id === selectedProductId);
+
+  if (!selectedResult?.product.virtualTryOnAvailable) return;
+
+  const panel = document.createElement("section");
+  panel.id = "try-on-selection";
+  panel.className = "try-on-selection";
+  panel.tabIndex = -1;
+  panel.setAttribute("aria-labelledby", "try-on-selection-heading");
+
+  const label = document.createElement("p");
+  label.className = "selection-label";
+  label.textContent = "Selected for virtual try-on";
+
+  const heading = document.createElement("h3");
+  heading.id = "try-on-selection-heading";
+  heading.textContent = selectedResult.product.name;
+
+  const explanation = document.createElement("p");
+  explanation.textContent =
+    "Your product selection is saved for this browser session. No photograph has been requested or uploaded yet.";
+
+  const disclaimer = document.createElement("p");
+  disclaimer.className = "selection-disclaimer";
+  disclaimer.textContent =
+    "Virtual try-on will provide a visual preview only, not proof of physical fit.";
+
+  panel.append(label, heading, explanation, disclaimer);
+  resultsRegion.append(panel);
 }
 
 function formatPrice(price) {

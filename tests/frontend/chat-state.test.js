@@ -9,7 +9,8 @@ import {
   clearChatSession,
   createEmptyChatSession,
   loadChatSession,
-  saveChatSession
+  saveChatSession,
+  selectProductForTryOn
 } from "../../frontend/chat-state.js";
 
 function response(overrides = {}) {
@@ -132,4 +133,39 @@ test("ignores corrupted or unusable stored data", () => {
 
   storage.setItem(SESSION_STORAGE_KEY, JSON.stringify({ recentMessages: "wrong" }));
   assert.deepEqual(loadChatSession(storage), createEmptyChatSession());
+});
+
+test("selects a displayed product that is ready for virtual try-on", () => {
+  const session = createEmptyChatSession();
+  session.conversationState.lastDisplayedProductIds = ["mock-dress-001"];
+
+  const next = selectProductForTryOn(session, {
+    id: "mock-dress-001",
+    virtualTryOnAvailable: true
+  });
+
+  assert.equal(next.conversationState.selectedProductId, "mock-dress-001");
+  assert.equal(session.conversationState.selectedProductId, null);
+});
+
+test("rejects unavailable or undisplayed try-on selections", () => {
+  const session = createEmptyChatSession();
+  session.conversationState.lastDisplayedProductIds = ["mock-dress-001"];
+
+  assert.throws(
+    () =>
+      selectProductForTryOn(session, {
+        id: "mock-dress-001",
+        virtualTryOnAvailable: false
+      }),
+    /not available/
+  );
+  assert.throws(
+    () =>
+      selectProductForTryOn(session, {
+        id: "mock-dress-999",
+        virtualTryOnAvailable: true
+      }),
+    /not in the current results/
+  );
 });
