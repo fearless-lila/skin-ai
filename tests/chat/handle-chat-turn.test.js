@@ -90,7 +90,7 @@ test("runs the complete search branch and records its workflow steps", async () 
   assert.equal(response.results.compatibleProducts.length, 2);
   assert.equal(
     response.results.compatibleProducts[0].product.imageUrl,
-    "https://demo.skin-ai.example/images/mock-dress-001.jpg"
+    "https://skin-ai.pages.dev/images/avery-front-zip-dress.png"
   );
   assert.deepEqual(steps, [
     CHAT_WORKFLOW_STEP.VALIDATE_REQUEST,

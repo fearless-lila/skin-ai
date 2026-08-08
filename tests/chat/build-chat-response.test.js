@@ -66,7 +66,7 @@ test("joins matcher results with trusted product-card data", () => {
   assert.ok(avery);
   assert.equal(
     avery.product.imageUrl,
-    "https://demo.skin-ai.example/images/mock-dress-001.jpg"
+    "https://skin-ai.pages.dev/images/avery-front-zip-dress.png"
   );
   assert.equal(avery.product.price.amount, 68);
   assert.ok(

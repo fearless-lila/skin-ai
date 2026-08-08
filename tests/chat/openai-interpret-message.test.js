@@ -387,7 +387,7 @@ test("plugs into handleChatTurn and reaches deterministic product matching", asy
   assert.ok(response.results.compatibleProducts.length > 0);
   assert.equal(
     response.results.compatibleProducts[0].product.imageUrl,
-    "https://demo.skin-ai.example/images/mock-dress-001.jpg"
+    "https://skin-ai.pages.dev/images/avery-front-zip-dress.png"
   );
 });
 
