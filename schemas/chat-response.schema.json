@@ -237,7 +237,8 @@
         "productUrl",
         "price",
         "availability",
-        "sizes"
+        "sizes",
+        "virtualTryOnAvailable"
       ],
       "properties": {
         "id": {
@@ -303,6 +304,10 @@
             "minLength": 1,
             "maxLength": 60
           }
+        },
+        "virtualTryOnAvailable": {
+          "description": "Whether the trusted catalogue has a validated virtual-try-on configuration for this product.",
+          "type": "boolean"
         }
       }
     },

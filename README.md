@@ -174,6 +174,7 @@ The current backend includes an OpenAI Responses API interpreter using strict St
 The catalogue is the source of product truth. It contains fields such as:
 
 - Product ID, name, retailer, image, and product URL.
+- Explicit virtual-try-on readiness and trusted provider configuration.
 - Garment type and available sizes.
 - Garment measurements where available.
 - Closure and fastening type.

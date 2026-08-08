@@ -13,6 +13,12 @@
       "imageUrls": [
         "https://skin-ai.pages.dev/images/avery-front-zip-dress.png"
       ],
+      "virtualTryOn": {
+        "status": "ready",
+        "provider": "youcam_clothes_v3",
+        "referenceImageIndex": 0,
+        "garmentCategory": "full_body"
+      },
       "garmentType": "dress",
       "description": "Fictional test product with a full front zip and ring pull.",
       "price": {
@@ -87,6 +93,9 @@
       "imageUrls": [
         "https://demo.skin-ai.example/images/mock-dress-002.jpg"
       ],
+      "virtualTryOn": {
+        "status": "unavailable"
+      },
       "garmentType": "dress",
       "description": "Fictional test product with a partial back zip.",
       "price": {
@@ -153,6 +162,9 @@
       "imageUrls": [
         "https://demo.skin-ai.example/images/mock-shirt-001.jpg"
       ],
+      "virtualTryOn": {
+        "status": "unavailable"
+      },
       "garmentType": "shirt",
       "description": "Fictional test product with conventional front buttons.",
       "price": {
@@ -228,6 +240,9 @@
       "imageUrls": [
         "https://demo.skin-ai.example/images/mock-dress-003.jpg"
       ],
+      "virtualTryOn": {
+        "status": "unavailable"
+      },
       "garmentType": "dress",
       "description": "Fictional test product with a manually verified wrap construction.",
       "price": {
@@ -290,6 +305,9 @@
       "imageUrls": [
         "https://demo.skin-ai.example/images/mock-trousers-001.jpg"
       ],
+      "virtualTryOn": {
+        "status": "unavailable"
+      },
       "garmentType": "trousers",
       "description": "Fictional pull-on test product with no fastening.",
       "price": {
@@ -361,6 +379,9 @@
       "imageUrls": [
         "https://demo.skin-ai.example/images/mock-cardigan-001.jpg"
       ],
+      "virtualTryOn": {
+        "status": "unavailable"
+      },
       "garmentType": "cardigan",
       "description": "Fictional test product with concealed magnetic front closures.",
       "price": {
@@ -427,6 +448,9 @@
       "imageUrls": [
         "https://demo.skin-ai.example/images/mock-blouse-001.jpg"
       ],
+      "virtualTryOn": {
+        "status": "unavailable"
+      },
       "garmentType": "blouse",
       "description": "Fictional test product whose retailer description omits all fastening and dressing details.",
       "price": {
@@ -474,6 +498,9 @@
       "imageUrls": [
         "https://demo.skin-ai.example/images/mock-jumpsuit-001.jpg"
       ],
+      "virtualTryOn": {
+        "status": "unavailable"
+      },
       "garmentType": "jumpsuit",
       "description": "Fictional test product with a partial side zip and extended pull tab.",
       "price": {

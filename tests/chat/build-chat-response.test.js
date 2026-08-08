@@ -68,6 +68,8 @@ test("joins matcher results with trusted product-card data", () => {
     avery.product.imageUrl,
     "https://skin-ai.pages.dev/images/avery-front-zip-dress.png"
   );
+  assert.equal(avery.product.virtualTryOnAvailable, true);
+  assert.equal("virtualTryOn" in avery.product, false);
   assert.equal(avery.product.price.amount, 68);
   assert.ok(
     avery.compatibility.confirmedMatches.some(
@@ -76,6 +78,12 @@ test("joins matcher results with trusted product-card data", () => {
         evidenceStatus === "retailer_provided"
     )
   );
+
+  const nora = response.results.compatibleProducts.find(
+    ({ product }) => product.id === "mock-dress-003"
+  );
+  assert.ok(nora);
+  assert.equal(nora.product.virtualTryOnAvailable, false);
 });
 
 test("keeps previous requirements for a conversational follow-up", () => {

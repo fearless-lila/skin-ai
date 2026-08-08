@@ -11,6 +11,7 @@
     "retailer",
     "productUrl",
     "imageUrls",
+    "virtualTryOn",
     "garmentType",
     "sizes",
     "measurements",
@@ -61,6 +62,17 @@
         "type": "string",
         "format": "uri"
       }
+    },
+    "virtualTryOn": {
+      "description": "Trusted provider configuration for virtual try-on. Ready products reference a verified image from imageUrls; unavailable products cannot be submitted.",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/readyVirtualTryOn"
+        },
+        {
+          "$ref": "#/$defs/unavailableVirtualTryOn"
+        }
+      ]
     },
     "garmentType": {
       "$ref": "#/$defs/garmentType"
@@ -143,6 +155,45 @@
     }
   },
   "$defs": {
+    "readyVirtualTryOn": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "provider",
+        "referenceImageIndex",
+        "garmentCategory"
+      ],
+      "properties": {
+        "status": {
+          "const": "ready"
+        },
+        "provider": {
+          "const": "youcam_clothes_v3"
+        },
+        "referenceImageIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 11
+        },
+        "garmentCategory": {
+          "description": "The currently verified YouCam Clothes v3 category for the MVP dress reference.",
+          "const": "full_body"
+        }
+      }
+    },
+    "unavailableVirtualTryOn": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "const": "unavailable"
+        }
+      }
+    },
     "garmentType": {
       "type": "string",
       "enum": [
@@ -172,6 +223,7 @@
       ]
     },
     "closureTypeEvidence": {
+      "type": "object",
       "$ref": "#/$defs/evidenceObject",
       "properties": {
         "value": {
@@ -193,6 +245,7 @@
       }
     },
     "closureLocationEvidence": {
+      "type": "object",
       "$ref": "#/$defs/evidenceObject",
       "properties": {
         "value": {
@@ -210,6 +263,7 @@
       }
     },
     "dressingMethodEvidence": {
+      "type": "object",
       "$ref": "#/$defs/evidenceObject",
       "properties": {
         "value": {
@@ -226,6 +280,7 @@
       }
     },
     "gripFeatureEvidence": {
+      "type": "object",
       "$ref": "#/$defs/evidenceObject",
       "properties": {
         "value": {
@@ -242,6 +297,7 @@
       }
     },
     "openingExtentEvidence": {
+      "type": "object",
       "$ref": "#/$defs/evidenceObject",
       "properties": {
         "value": {

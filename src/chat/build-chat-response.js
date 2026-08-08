@@ -159,8 +159,24 @@ function buildProductCard(product) {
     productUrl: product.productUrl,
     price: product.price ?? null,
     availability: product.availability ?? "unknown",
-    sizes: product.sizes
+    sizes: product.sizes,
+    virtualTryOnAvailable: isVirtualTryOnAvailable(product)
   };
+}
+
+function isVirtualTryOnAvailable(product) {
+  const configuration = product.virtualTryOn;
+
+  if (
+    configuration?.status !== "ready" ||
+    configuration.provider !== "youcam_clothes_v3" ||
+    configuration.garmentCategory !== "full_body" ||
+    !Number.isInteger(configuration.referenceImageIndex)
+  ) {
+    return false;
+  }
+
+  return Boolean(product.imageUrls?.[configuration.referenceImageIndex]);
 }
 
 function buildCompatibilitySummary(matchResult) {
