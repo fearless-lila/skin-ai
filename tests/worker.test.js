@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   CHAT_API_PATH,
   MAX_CHAT_REQUEST_BYTES,
+  TRY_ON_UPLOAD_API_PATH,
   createWorker
 } from "../src/worker.js";
 
@@ -19,6 +20,19 @@ function validChatRequest(overrides = {}) {
       currentRequirements: null,
       lastDisplayedProductIds: [],
       selectedProductId: null
+    },
+    ...overrides
+  };
+}
+
+function validTryOnUploadRequest(overrides = {}) {
+  return {
+    selectedProductId: "mock-dress-001",
+    consent: true,
+    file: {
+      name: "portrait.jpg",
+      contentType: "image/jpeg",
+      size: 1234
     },
     ...overrides
   };
@@ -70,10 +84,37 @@ function completedOpenAiResponse(output) {
 function environment(overrides = {}) {
   return {
     OPENAI_API_KEY: "server-side-test-key",
+    YOUCAM_API_KEY: "server-side-youcam-key",
     OPENAI_MODEL: "test-model",
     ALLOWED_ORIGIN: allowedOrigin,
     ...overrides
   };
+}
+
+function completedYouCamFileResponse() {
+  return new Response(
+    JSON.stringify({
+      status: 200,
+      data: {
+        files: [
+          {
+            file_id: "youcam-file-123",
+            requests: [
+              {
+                method: "PUT",
+                url: "https://uploads.example/photo?signature=temporary",
+                headers: { "Content-Type": "image/jpg" }
+              }
+            ]
+          }
+        ]
+      }
+    }),
+    {
+      status: 200,
+      headers: { "Content-Type": "application/json" }
+    }
+  );
 }
 
 test("POST /api/chat returns the validated orchestration response", async () => {
@@ -103,6 +144,101 @@ test("POST /api/chat returns the validated orchestration response", async () => 
   assert.equal(body.searchPerformed, false);
   assert.equal(body.results, null);
   assert.equal(providerCalls, 1);
+});
+
+test("POST /api/try-on/upload returns safe temporary upload instructions", async () => {
+  let providerCalls = 0;
+  const worker = createWorker({
+    logger: silentLogger,
+    fetchImpl: async (_url, options) => {
+      providerCalls += 1;
+      assert.equal(options.headers.Authorization, "Bearer server-side-youcam-key");
+      assert.deepEqual(JSON.parse(options.body), {
+        files: [
+          {
+            content_type: "image/jpg",
+            file_name: "portrait.jpg",
+            file_size: 1234
+          }
+        ]
+      });
+      return completedYouCamFileResponse();
+    }
+  });
+
+  const response = await worker.fetch(
+    request({ path: TRY_ON_UPLOAD_API_PATH, body: validTryOnUploadRequest() }),
+    environment()
+  );
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("Access-Control-Allow-Origin"), allowedOrigin);
+  assert.deepEqual(body, {
+    selectedProductId: "mock-dress-001",
+    fileId: "youcam-file-123",
+    upload: {
+      url: "https://uploads.example/photo?signature=temporary",
+      method: "PUT",
+      contentType: "image/jpg"
+    }
+  });
+  assert.doesNotMatch(JSON.stringify(body), /server-side-youcam-key/);
+  assert.equal(providerCalls, 1);
+});
+
+test("try-on upload rejects invalid input and unavailable products before YouCam", async (t) => {
+  let providerCalls = 0;
+  const worker = createWorker({
+    logger: silentLogger,
+    fetchImpl: async () => {
+      providerCalls += 1;
+      throw new Error("must not be called");
+    }
+  });
+
+  await t.test("missing consent", async () => {
+    const response = await worker.fetch(
+      request({
+        path: TRY_ON_UPLOAD_API_PATH,
+        body: validTryOnUploadRequest({ consent: false })
+      }),
+      environment()
+    );
+    const body = await response.json();
+
+    assert.equal(response.status, 400);
+    assert.equal(body.error.code, "INVALID_TRY_ON_UPLOAD_REQUEST");
+  });
+
+  await t.test("unavailable product", async () => {
+    const response = await worker.fetch(
+      request({
+        path: TRY_ON_UPLOAD_API_PATH,
+        body: validTryOnUploadRequest({ selectedProductId: "mock-dress-002" })
+      }),
+      environment()
+    );
+    const body = await response.json();
+
+    assert.equal(response.status, 409);
+    assert.equal(body.error.code, "VIRTUAL_TRY_ON_UNAVAILABLE");
+  });
+
+  assert.equal(providerCalls, 0);
+});
+
+test("try-on upload reports missing YouCam configuration safely", async () => {
+  const worker = createWorker({ logger: silentLogger });
+  const response = await worker.fetch(
+    request({ path: TRY_ON_UPLOAD_API_PATH, body: validTryOnUploadRequest() }),
+    environment({ YOUCAM_API_KEY: undefined })
+  );
+  const body = await response.json();
+
+  assert.equal(response.status, 503);
+  assert.equal(body.error.code, "TRY_ON_TEMPORARILY_UNAVAILABLE");
+  assert.doesNotMatch(JSON.stringify(body), /API key/);
 });
 
 test("rejects invalid chat data before calling OpenAI", async () => {

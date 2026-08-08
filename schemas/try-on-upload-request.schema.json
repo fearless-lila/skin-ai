@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skin-ai:schema:try-on-upload-request:v1",
+  "title": "Skin AI virtual try-on upload request",
+  "description": "Validated metadata used to request a temporary YouCam upload URL. The photograph bytes are not sent in this request.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "selectedProductId",
+    "consent",
+    "file"
+  ],
+  "properties": {
+    "selectedProductId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "consent": {
+      "description": "Explicit confirmation that the user authorises this photograph to be sent to YouCam for the requested preview.",
+      "const": true
+    },
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "contentType",
+        "size"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "contentType": {
+          "type": "string",
+          "enum": [
+            "image/jpeg",
+            "image/png"
+          ]
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10485760
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skin-ai:schema:try-on-upload-response:v1",
+  "title": "Skin AI virtual try-on upload response",
+  "description": "Safe temporary upload instructions returned to the frontend without exposing the YouCam API key.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "selectedProductId",
+    "fileId",
+    "upload"
+  ],
+  "properties": {
+    "selectedProductId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "fileId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "upload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "url",
+        "method",
+        "contentType"
+      ],
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "maxLength": 8192
+        },
+        "method": {
+          "const": "PUT"
+        },
+        "contentType": {
+          "type": "string",
+          "enum": [
+            "image/jpg",
+            "image/jpeg",
+            "image/png"
+          ]
+        }
+      }
+    }
+  }
+}

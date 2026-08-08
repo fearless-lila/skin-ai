@@ -324,27 +324,61 @@ The interface must explain the evidence behind a result and avoid guarantees suc
 
 ## YouCam virtual try-on flow
 
-The browser does not call authenticated YouCam endpoints directly because that would expose the API key.
+The user photograph and garment image are not sent together during the upload step. Uploading only places the private user photograph in YouCam's temporary file storage and gives it a `file_id`. The two images are paired later, when the backend creates the virtual try-on task.
+
+The browser never receives the `YOUCAM_API_KEY`. All authenticated YouCam requests go through the existing Cloudflare Worker. The photograph bytes can go directly from the browser to a short-lived signed upload URL because that URL authorises only the specific upload; it does not expose the account API key.
 
 ```text
-1. User selects a product and gives photo-processing consent.
-2. Frontend sends file metadata to the Cloudflare Worker.
-3. Worker requests a signed upload URL and file ID from YouCam.
-4. Frontend uploads the image to the signed URL.
-5. Frontend asks the Worker to create a virtual try-on task.
-6. Worker calls YouCam and returns a task ID.
-7. Frontend periodically asks the Worker for the task status.
-8. Worker checks YouCam until the task succeeds or fails.
-9. Frontend displays the result or a recoverable error.
+1. User selects a try-on-ready product from the grounded catalogue.
+2. User chooses a photograph and gives explicit photo-processing consent.
+3. Frontend sends the product ID and photograph metadata—not the image bytes—to the Worker.
+4. Worker validates the consent, product ID, file type, file size, and trusted try-on configuration.
+5. Worker uses its private API key to request a YouCam signed upload URL and `file_id`.
+6. Worker returns only the safe upload details to the frontend.
+7. Frontend uploads the photograph bytes directly to the signed YouCam URL.
+8. After upload succeeds, frontend sends the `file_id` and selected product ID to the Worker.
+9. Worker reloads the product from the trusted catalogue and obtains its garment image URL and category.
+10. Worker creates one YouCam task containing both image references:
+      - `src_file_id`: the uploaded user photograph
+      - `ref_file_url`: the selected garment's public image URL
+      - `garment_category`: the trusted catalogue value, such as `full_body`
+11. YouCam returns a `task_id`, which identifies this exact processing job.
+12. Frontend periodically sends that `task_id` to the Worker to ask for progress.
+13. Worker checks the matching task with YouCam until it reports success or error.
+14. On success, Worker returns the generated result URL to the frontend.
+15. Frontend displays the generated image as a visual preview with a fit disclaimer.
 ```
 
-Planned backend routes:
+The task-creation request is where YouCam learns which two images belong together. Conceptually, the Worker sends:
+
+```json
+{
+  "src_file_id": "youcam-user-photo-file-id",
+  "ref_file_url": "https://skin-ai.pages.dev/images/avery-front-zip-dress.png",
+  "garment_category": "full_body"
+}
+```
+
+`src_file_id` points to the private photograph uploaded in the earlier step. `ref_file_url` points to the selected catalogue garment image hosted by the frontend's public Cloudflare Pages project. The Worker derives the garment URL and category from the trusted product record; it does not trust a browser-supplied garment URL.
+
+YouCam processes tasks asynchronously, so the generated image is not returned immediately by the create-task call. The returned `task_id` is the receipt for that particular user-photo-and-garment combination. It lets the frontend ask the Worker about the same job without uploading either image again.
+
+### Component responsibilities during try-on
+
+| Component | Responsibility |
+| --- | --- |
+| Frontend in the browser | Collect the user's selection, photograph, and consent; upload bytes to the signed URL; display progress and the final preview. |
+| Cloudflare Pages | Host the public frontend files and approved garment reference images. |
+| Cloudflare Worker | Validate every step, keep the API key private, reload trusted product data, create the paired task, and check its status. |
+| YouCam File API | Issue the temporary upload destination and `file_id` for the user photograph. |
+| YouCam Clothes task API | Combine the photograph reference and garment reference into one processing job and return a `task_id`. |
+
+Backend routes (the first one is now implemented; task creation and status are next):
 
 ```text
-POST /api/search
-POST /api/vto/upload
-POST /api/vto/tasks
-GET  /api/vto/tasks/:taskId
+POST /api/try-on/upload          implemented: create signed photo upload
+POST /api/try-on/tasks           planned: create YouCam try-on task
+GET  /api/try-on/tasks/:taskId   planned: check task status
 ```
 
 The actual image upload may go directly from the browser to the temporary signed upload URL. Creating upload URLs, creating tasks, and checking status still go through the backend.

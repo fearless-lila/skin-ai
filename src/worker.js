@@ -13,9 +13,20 @@ import {
   LlmResponseValidationError
 } from "./chat/validate-chat-contracts.js";
 import { ChatResponseValidationError } from "./chat/build-chat-response.js";
+import {
+  TryOnUploadError,
+  handleTryOnUpload
+} from "./try-on/handle-try-on-upload.js";
+import {
+  YouCamUploadError,
+  createYouCamUploadRequester
+} from "./try-on/request-youcam-upload.js";
 
 export const CHAT_API_PATH = "/api/chat";
+export const TRY_ON_UPLOAD_API_PATH = "/api/try-on/upload";
 export const MAX_CHAT_REQUEST_BYTES = 32 * 1024;
+
+const API_PATHS = new Set([CHAT_API_PATH, TRY_ON_UPLOAD_API_PATH]);
 
 /**
  * Build a Worker around injectable boundaries so the HTTP behaviour can be
@@ -30,7 +41,7 @@ export function createWorker({
     async fetch(request, env = {}) {
       const url = new URL(request.url);
 
-      if (url.pathname !== CHAT_API_PATH) {
+      if (!API_PATHS.has(url.pathname)) {
         return jsonResponse(
           404,
           publicError("NOT_FOUND", "This API route does not exist.")
@@ -83,10 +94,10 @@ export function createWorker({
         );
       }
 
-      let chatRequest;
+      let requestBody;
 
       try {
-        chatRequest = await readJsonRequest(request);
+        requestBody = await readJsonRequest(request);
       } catch (error) {
         const tooLarge = error instanceof RequestTooLargeError;
 
@@ -95,7 +106,7 @@ export function createWorker({
           publicError(
             tooLarge ? "REQUEST_TOO_LARGE" : "INVALID_JSON",
             tooLarge
-              ? "The chat request is too large."
+              ? "The request is too large."
               : "The request body is not valid JSON."
           ),
           cors.headers
@@ -103,12 +114,25 @@ export function createWorker({
       }
 
       try {
+        if (url.pathname === TRY_ON_UPLOAD_API_PATH) {
+          const requestProviderUpload = createYouCamUploadRequester({
+            apiKey: env.YOUCAM_API_KEY,
+            fetchImpl
+          });
+          const response = await handleTryOnUpload(requestBody, {
+            catalogue,
+            requestProviderUpload
+          });
+
+          return jsonResponse(200, response, cors.headers);
+        }
+
         const interpretMessage = createOpenAiInterpreter({
           apiKey: env.OPENAI_API_KEY,
           model: env.OPENAI_MODEL || DEFAULT_OPENAI_MODEL,
           fetchImpl
         });
-        const response = await handleChatTurn(chatRequest, {
+        const response = await handleChatTurn(requestBody, {
           catalogue,
           interpretMessage
         });
@@ -193,6 +217,53 @@ function resolveCors(request, configuredOrigins) {
 }
 
 function mapPublicError(error) {
+  if (
+    error instanceof TryOnUploadError &&
+    error.code === "INVALID_TRY_ON_UPLOAD_REQUEST"
+  ) {
+    return {
+      status: 400,
+      code: "INVALID_TRY_ON_UPLOAD_REQUEST",
+      message: "The virtual try-on upload request contains invalid or missing fields."
+    };
+  }
+
+  if (
+    error instanceof TryOnUploadError &&
+    error.code === "UNKNOWN_PRODUCT_REFERENCE"
+  ) {
+    return {
+      status: 400,
+      code: "UNKNOWN_PRODUCT_REFERENCE",
+      message: "The selected product is no longer available."
+    };
+  }
+
+  if (
+    error instanceof TryOnUploadError &&
+    error.code === "VIRTUAL_TRY_ON_UNAVAILABLE"
+  ) {
+    return {
+      status: 409,
+      code: "VIRTUAL_TRY_ON_UNAVAILABLE",
+      message: "This product is not available for virtual try-on."
+    };
+  }
+
+  if (
+    error instanceof YouCamUploadError ||
+    (error instanceof TryOnUploadError &&
+      ["UPLOAD_PROVIDER_FAILED", "INVALID_UPLOAD_PROVIDER_RESPONSE"].includes(
+        error.code
+      ))
+  ) {
+    return {
+      status: 503,
+      code: "TRY_ON_TEMPORARILY_UNAVAILABLE",
+      message: "The virtual try-on upload service is unavailable. Please try again."
+    };
+  }
+
   if (error instanceof ChatRequestValidationError) {
     return {
       status: 400,
@@ -246,7 +317,7 @@ function logOperationalError(logger, error) {
     return;
   }
 
-  logger.error("Chat request failed", {
+  logger.error("API request failed", {
     name: error?.name ?? "Error",
     code: error?.code ?? "UNEXPECTED_ERROR",
     step: error?.step ?? null,

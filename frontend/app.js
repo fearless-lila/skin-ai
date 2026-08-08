@@ -7,8 +7,11 @@ import {
   selectProductForTryOn
 } from "./chat-state.js";
 import { validateTryOnPhoto } from "./photo-selection.js";
+import { uploadTryOnPhoto } from "./try-on-upload.js";
 
 const CHAT_API_URL = "https://skin-ai.lilahu21797.workers.dev/api/chat";
+const TRY_ON_UPLOAD_API_URL =
+  "https://skin-ai.lilahu21797.workers.dev/api/try-on/upload";
 
 const form = document.querySelector("#chat-form");
 const input = document.querySelector("#message-input");
@@ -22,6 +25,7 @@ const welcomeTemplate = document.querySelector("#welcome-template");
 let session = loadChatSession();
 let photoSelection = emptyPhotoSelection();
 let photoValidationGeneration = 0;
+let photoUploadController = null;
 
 renderConversation();
 renderResults(session.displayResults);
@@ -324,7 +328,7 @@ function appendTryOnSelection(results) {
 
   const explanation = document.createElement("p");
   explanation.textContent =
-    "Choose a photograph to prepare this virtual try-on. The file stays in this browser tab until a later step explicitly uploads it.";
+    "Choose a photograph and review the consent statement. The photograph is uploaded only when you select Upload photograph.";
 
   const guidance = document.createElement("ul");
   guidance.id = "try-on-photo-guidance";
@@ -411,45 +415,47 @@ function buildPhotoPreparationForm() {
   consent.id = "try-on-consent";
   consent.type = "checkbox";
   consent.checked = photoSelection.consentGiven;
+  consent.disabled = photoSelection.uploading || photoSelection.uploaded;
   const consentLabel = document.createElement("label");
   consentLabel.htmlFor = "try-on-consent";
   consentLabel.textContent =
-    "I consent to this photograph being sent to YouCam for the virtual try-on when I continue to the upload step.";
+    "I consent to this photograph being sent to YouCam for this virtual try-on preview.";
   consentRow.append(consent, consentLabel);
 
   const confirm = document.createElement("button");
   confirm.className = "confirm-photo-button";
   confirm.type = "submit";
-  confirm.disabled = !photoSelection.consentGiven;
-  confirm.textContent = photoSelection.confirmed
-    ? "Photo confirmed"
-    : "Confirm photo";
+  confirm.disabled =
+    !photoSelection.consentGiven ||
+    photoSelection.uploading ||
+    photoSelection.uploaded;
+  confirm.textContent = photoSelection.uploading
+    ? "Uploading photograph…"
+    : photoSelection.uploaded
+      ? "Photograph uploaded"
+      : "Upload photograph";
 
   consent.addEventListener("change", () => {
     photoSelection.consentGiven = consent.checked;
-    photoSelection.confirmed = false;
+    photoSelection.uploaded = false;
+    photoSelection.fileId = null;
     confirm.disabled = !consent.checked;
-    confirm.textContent = "Confirm photo";
+    confirm.textContent = "Upload photograph";
     form.querySelector(".photo-ready")?.remove();
   });
 
-  form.addEventListener("submit", (event) => {
+  form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    if (!photoSelection.file || !photoSelection.consentGiven) return;
-
-    photoSelection.confirmed = true;
-    renderResults(session.displayResults);
-    setStatus("Photo confirmed. It has not been uploaded.");
-    document.querySelector("#try-on-selection")?.focus();
+    await handlePhotoUpload();
   });
 
   form.append(preview, consentRow, confirm);
 
-  if (photoSelection.confirmed) {
+  if (photoSelection.uploaded) {
     const ready = document.createElement("p");
     ready.className = "photo-ready";
     ready.textContent =
-      "Photo ready for the next step. It remains only in this open browser tab and has not been uploaded.";
+      "Photograph uploaded securely. It is ready to be paired with the selected garment in the next step.";
     form.append(ready);
   }
 
@@ -483,7 +489,9 @@ async function handlePhotoChange(file) {
     width: validation.width,
     height: validation.height,
     consentGiven: false,
-    confirmed: false,
+    uploading: false,
+    uploaded: false,
+    fileId: null,
     error: null
   };
   renderResults(session.displayResults);
@@ -498,17 +506,76 @@ function emptyPhotoSelection() {
     width: null,
     height: null,
     consentGiven: false,
-    confirmed: false,
+    uploading: false,
+    uploaded: false,
+    fileId: null,
     error: null
   };
 }
 
 function resetPhotoSelection() {
   photoValidationGeneration += 1;
+  photoUploadController?.abort();
+  photoUploadController = null;
   if (photoSelection.previewUrl) {
     URL.revokeObjectURL(photoSelection.previewUrl);
   }
   photoSelection = emptyPhotoSelection();
+}
+
+async function handlePhotoUpload() {
+  const selectedProductId = session.conversationState.selectedProductId;
+  if (
+    !selectedProductId ||
+    !photoSelection.file ||
+    !photoSelection.consentGiven ||
+    photoSelection.uploading ||
+    photoSelection.uploaded
+  ) {
+    return;
+  }
+
+  const controller = new AbortController();
+  photoUploadController = controller;
+  photoSelection.uploading = true;
+  photoSelection.error = null;
+  renderResults(session.displayResults);
+  setStatus("Creating a secure upload and sending the photograph…");
+
+  try {
+    const result = await uploadTryOnPhoto({
+      apiUrl: TRY_ON_UPLOAD_API_URL,
+      selectedProductId,
+      file: photoSelection.file,
+      consent: true,
+      signal: controller.signal
+    });
+
+    if (photoUploadController !== controller) return;
+
+    photoSelection.uploaded = true;
+    photoSelection.fileId = result.fileId;
+    setStatus("Photograph uploaded securely.");
+  } catch (error) {
+    if (error?.name === "AbortError" || photoUploadController !== controller) {
+      return;
+    }
+
+    photoSelection.error =
+      error instanceof Error
+        ? error.message
+        : "The photograph could not be uploaded. Please try again.";
+    setStatus("The photograph could not be uploaded.");
+  } finally {
+    if (photoUploadController === controller) {
+      photoSelection.uploading = false;
+      photoUploadController = null;
+      renderResults(session.displayResults);
+      document.querySelector(
+        photoSelection.error ? "#photo-error" : "#try-on-selection"
+      )?.focus();
+    }
+  }
 }
 
 function formatFileSize(bytes) {
