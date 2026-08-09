@@ -59,13 +59,13 @@ export function addTryOnResultMessage(
 
   const resultMessage = {
     role: "assistant",
-    content: `Here is your virtual try-on preview with ${normalizedProductName}.`,
+    content: `Here is your virtual clothing preview with ${normalizedProductName}. This may help you decide whether a physical try-on is worth the effort.`,
     attachment: {
       type: "try_on_result",
       taskId: normalizedTaskId,
       productId: normalizedProductId,
       imageUrl: normalizedResultUrl,
-      alt: `AI-generated virtual try-on preview using ${normalizedProductName}`
+      alt: `AI-generated virtual clothing preview using ${normalizedProductName}`
     }
   };
 

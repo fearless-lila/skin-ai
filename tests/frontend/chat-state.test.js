@@ -76,13 +76,14 @@ test("records a try-on image in local history without sending image data to the 
 
   assert.deepEqual(session.recentMessages[0], {
     role: "assistant",
-    content: "Here is your virtual try-on preview with Avery Front-Zip Dress.",
+    content:
+      "Here is your virtual clothing preview with Avery Front-Zip Dress. This may help you decide whether a physical try-on is worth the effort.",
     attachment: {
       type: "try_on_result",
       taskId: "task-123",
       productId: "mock-dress-001",
       imageUrl: "https://example.com/generated-preview.jpg",
-      alt: "AI-generated virtual try-on preview using Avery Front-Zip Dress"
+      alt: "AI-generated virtual clothing preview using Avery Front-Zip Dress"
     }
   });
 
@@ -92,7 +93,8 @@ test("records a try-on image in local history without sending image data to the 
     recentMessages: [
       {
         role: "assistant",
-        content: "Here is your virtual try-on preview with Avery Front-Zip Dress."
+        content:
+          "Here is your virtual clothing preview with Avery Front-Zip Dress. This may help you decide whether a physical try-on is worth the effort."
       }
     ],
     conversationState: {

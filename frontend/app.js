@@ -79,7 +79,7 @@ async function handleSubmit(event) {
   scrollConversationToBottom();
   input.value = "";
   setBusy(true);
-  setStatus("Looking at your request…");
+  setStatus("Checking your access needs and clothing request…");
 
   try {
     const response = await fetch(CHAT_API_URL, {
@@ -91,7 +91,7 @@ async function handleSubmit(event) {
 
     if (!response.ok) {
       throw new Error(
-        body?.error?.message ?? "The clothing assistant is unavailable right now."
+        body?.error?.message ?? "AccessWear is unavailable right now."
       );
     }
 
@@ -106,12 +106,14 @@ async function handleSubmit(event) {
     saveChatSession(session);
     renderConversation();
     scrollConversationToBottom();
-    setStatus(body.searchPerformed ? "Search complete." : "Reply received.");
+    setStatus(
+      body.searchPerformed ? "Accessible clothing search complete." : "Reply received."
+    );
   } catch (error) {
     appendError(
       error instanceof Error
         ? error.message
-        : "The clothing assistant is unavailable right now."
+        : "AccessWear is unavailable right now."
     );
     setStatus("The request could not be completed.");
   } finally {
@@ -153,7 +155,7 @@ function appendMessage(
 
   const label = document.createElement("p");
   label.className = "message-label";
-  label.textContent = role === "assistant" ? "Skin AI" : "You";
+  label.textContent = role === "assistant" ? "AccessWear" : "You";
 
   const text = document.createElement("p");
   text.textContent = content;
@@ -189,7 +191,7 @@ function appendMessage(
 
     const caption = document.createElement("figcaption");
     caption.textContent =
-      "AI-generated visual approximation only. It does not confirm measurements, comfort or physical fit.";
+      "AI-generated visual preview only. It does not confirm measurements, comfort, accessibility or physical fit.";
     figure.append(image, fallback, caption);
     message.append(figure);
   }
@@ -231,12 +233,12 @@ function productResultsMatch(first, second) {
 function buildProductResults(results, { current }) {
   const container = document.createElement("section");
   container.className = "message-results";
-  container.setAttribute("aria-label", "Clothing matches");
+  container.setAttribute("aria-label", "Accessible clothing matches");
   const header = document.createElement("div");
   header.className = "results-header";
 
   const heading = document.createElement("h3");
-  heading.textContent = "Clothing matches";
+  heading.textContent = "Accessible clothing matches";
   header.append(heading);
 
   if (results.notice) {
@@ -246,10 +248,10 @@ function buildProductResults(results, { current }) {
     header.append(notice);
   }
 
-  container.append(header);
+  container.append(header, buildMatchFeatures());
   appendProductGroup(
     container,
-    "Confirmed matches",
+    "Documented matches",
     results.compatibleProducts,
     "compatible",
     { current, resultSet: results }
@@ -269,7 +271,7 @@ function buildProductResults(results, { current }) {
     const empty = document.createElement("p");
     empty.className = "empty-results";
     empty.textContent =
-      "No catalogue items met these requirements. Try changing one preference or requirement.";
+      "No catalogue items met these access needs. You can change a preference, but you do not need to remove a requirement that is essential for you.";
     container.append(empty);
   }
 
@@ -279,6 +281,43 @@ function buildProductResults(results, { current }) {
   }
 
   return container;
+}
+
+function buildMatchFeatures() {
+  const list = document.createElement("div");
+  list.className = "match-features";
+  list.setAttribute(
+    "aria-label",
+    "Accessibility features considered in clothing matches"
+  );
+
+  const features = [
+    ["↔", "Easy openings", "Front, wrap and pull-on"],
+    ["♡", "Accessible fastenings", "Options needing less hand effort"],
+    ["☁", "Comfort and movement", "Sensory and mobility needs"],
+    ["○", "Size evidence", "Measurements where listed"]
+  ];
+
+  for (const [icon, title, description] of features) {
+    const item = document.createElement("div");
+    item.className = "match-feature";
+
+    const iconElement = document.createElement("span");
+    iconElement.className = "match-feature-icon";
+    iconElement.setAttribute("aria-hidden", "true");
+    iconElement.textContent = icon;
+
+    const copy = document.createElement("div");
+    const heading = document.createElement("h4");
+    heading.textContent = title;
+    const detail = document.createElement("p");
+    detail.textContent = description;
+    copy.append(heading, detail);
+    item.append(iconElement, copy);
+    list.append(item);
+  }
+
+  return list;
 }
 
 function renderTailorFinder() {
@@ -292,12 +331,18 @@ function renderTailorFinder() {
 function buildTailorFinder() {
   const panel = document.createElement("section");
   panel.className = "tailor-finder";
-  panel.setAttribute("aria-label", "Tailor location search controls");
+  panel.setAttribute("aria-label", "Alteration service location search controls");
 
   const currentLocationButton = document.createElement("button");
   currentLocationButton.className = "location-button";
   currentLocationButton.type = "button";
-  currentLocationButton.textContent = "Use my current location";
+  const locationIcon = document.createElement("span");
+  locationIcon.className = "location-button-icon";
+  locationIcon.setAttribute("aria-hidden", "true");
+  locationIcon.textContent = "⌖";
+  const locationButtonLabel = document.createElement("span");
+  locationButtonLabel.textContent = "Use my current location";
+  currentLocationButton.append(locationIcon, locationButtonLabel);
 
   const divider = document.createElement("p");
   divider.className = "tailor-divider";
@@ -327,7 +372,7 @@ function buildTailorFinder() {
   const privacy = document.createElement("p");
   privacy.className = "tailor-privacy";
   privacy.textContent =
-    "Precise coordinates are sent through Skin AI to OpenStreetMap only for this search; they are not saved or sent to the LLM. The location label and shop results stay in this browser tab.";
+    "Your precise coordinates are sent through AccessWear to OpenStreetMap only for this search. They are not saved or included in your clothing conversation. The location label and results stay in this browser tab.";
 
   const progress = document.createElement("p");
   progress.className = "tailor-search-progress";
@@ -406,8 +451,8 @@ async function requestTailorSearch(
 ) {
   if (!alreadyBusy) setTailorFinderBusy(panel, true);
   progress.removeAttribute("data-state");
-  progress.textContent = "Looking for nearby tailor shops…";
-  setStatus("Looking for nearby tailor shops…");
+  progress.textContent = "Looking for nearby alteration services…";
+  setStatus("Looking for nearby alteration services…");
 
   try {
     const url = new URL(TAILORS_API_URL);
@@ -419,22 +464,23 @@ async function requestTailorSearch(
 
     if (!response.ok) {
       throw new Error(
-        body?.error?.message ?? "Nearby tailor search is unavailable right now."
+        body?.error?.message ??
+          "Nearby alteration service search is unavailable right now."
       );
     }
 
     tailorSearchResults = body;
     renderTailorFinder();
-    setStatus("Nearby tailor search complete.");
+    setStatus("Nearby alteration service search complete.");
   } catch (error) {
     setTailorFinderBusy(panel, false);
     showTailorSearchError(
       progress,
       error instanceof Error
         ? error.message
-        : "Nearby tailor search is unavailable right now."
+        : "Nearby alteration service search is unavailable right now."
     );
-    setStatus("The nearby tailor search could not be completed.");
+    setStatus("The nearby alteration service search could not be completed.");
   }
 }
 
@@ -454,7 +500,7 @@ function buildTailorResults(attachment) {
   section.className = "tailor-results";
 
   const heading = document.createElement("h3");
-  heading.textContent = `Tailors near ${attachment.locationLabel}`;
+  heading.textContent = `Alteration services near ${attachment.locationLabel}`;
 
   const radius = document.createElement("p");
   radius.className = "tailor-radius";
@@ -474,7 +520,7 @@ function buildTailorResults(attachment) {
     const empty = document.createElement("p");
     empty.className = "empty-results";
     empty.textContent =
-      "No listed tailor was found nearby. Try searching another location.";
+      "No listed alteration service was found nearby. Try searching another location.";
     section.append(empty);
   }
 
@@ -614,7 +660,8 @@ function createProductCard(result, kind, { current, resultSet }) {
 
   const badge = document.createElement("p");
   badge.className = `match-badge ${kind}`;
-  badge.textContent = kind === "compatible" ? "Confirmed match" : "Check details";
+  badge.textContent =
+    kind === "compatible" ? "Documented match" : "Check missing details";
 
   const name = document.createElement("h4");
   name.textContent = product.name;
@@ -662,7 +709,9 @@ function createProductCard(result, kind, { current, resultSet }) {
     tryOnButton.className = "try-on-button";
     tryOnButton.type = "button";
     tryOnButton.setAttribute("aria-pressed", String(isSelected));
-    tryOnButton.textContent = isSelected ? "Selected for try-on" : "Try this on";
+    tryOnButton.textContent = isSelected
+      ? "Selected to preview"
+      : "Preview this item";
     tryOnButton.addEventListener("click", () =>
       handleTryOnSelection(product, resultSet)
     );
@@ -688,7 +737,7 @@ function handleTryOnSelection(product, resultSet) {
     session = selectProductForTryOn(session, product);
     saveChatSession(session);
     renderConversation();
-    setStatus(`${product.name} selected for virtual try-on.`);
+    setStatus(`${product.name} selected for a virtual preview.`);
     document.querySelector("#try-on-selection")?.focus();
   } catch (error) {
     setStatus(
@@ -716,7 +765,7 @@ function buildTryOnSelection(results) {
 
   const label = document.createElement("p");
   label.className = "selection-label";
-  label.textContent = "Selected for virtual try-on";
+  label.textContent = "Selected for a virtual preview";
 
   const heading = document.createElement("h3");
   heading.id = "try-on-selection-heading";
@@ -724,7 +773,7 @@ function buildTryOnSelection(results) {
 
   const explanation = document.createElement("p");
   explanation.textContent =
-    "Choose a photograph and review the consent statement. The photograph is uploaded only when you select Upload photograph.";
+    "A virtual preview may help you decide whether a physical try-on is worth the effort. Choose a photograph and review the consent statement. Your photograph is uploaded only when you select Upload photograph.";
 
   const guidance = document.createElement("ul");
   guidance.id = "try-on-photo-guidance";
@@ -742,7 +791,7 @@ function buildTryOnSelection(results) {
   const disclaimer = document.createElement("p");
   disclaimer.className = "selection-disclaimer";
   disclaimer.textContent =
-    "Virtual try-on will provide a visual preview only, not proof of physical fit.";
+    "This is a visual preview only. It cannot confirm fit, comfort, ease of dressing or accessibility.";
 
   const form = buildPhotoPreparationForm(selectedResult.product);
   panel.append(label, heading, explanation, guidance, form, disclaimer);
@@ -815,7 +864,7 @@ function buildPhotoPreparationForm(selectedProduct) {
   const consentLabel = document.createElement("label");
   consentLabel.htmlFor = "try-on-consent";
   consentLabel.textContent =
-    "I consent to this photograph being sent to YouCam for this virtual try-on preview.";
+    "I agree to send this photograph to YouCam to create my virtual clothing preview.";
   consentRow.append(consent, consentLabel);
 
   const confirm = document.createElement("button");
@@ -1004,8 +1053,8 @@ function buildGenerationPanel(selectedProduct) {
   const heading = document.createElement("h4");
   heading.id = "generation-heading";
   heading.textContent = photoSelection.resultUrl
-    ? "Your virtual try-on preview"
-    : "Generate the preview";
+    ? "Your virtual clothing preview"
+    : "Create your virtual clothing preview";
   panel.append(heading);
 
   if (photoSelection.resultUrl) {
@@ -1019,7 +1068,7 @@ function buildGenerationPanel(selectedProduct) {
 
   const explanation = document.createElement("p");
   explanation.textContent =
-    "Generating pairs the uploaded photograph with this garment and starts one YouCam processing task.";
+    "AccessWear will pair your uploaded photograph with this garment to create one visual preview.";
 
   const requiresHumanVerification = !photoSelection.taskId;
 
@@ -1055,8 +1104,8 @@ function buildGenerationPanel(selectedProduct) {
       : photoSelection.taskId
         ? "Check result again"
         : photoSelection.generationStatus === "failed"
-          ? "Try generation again"
-          : "Generate virtual try-on";
+          ? "Try creating the preview again"
+          : "Create my virtual preview";
   generateButton.addEventListener("click", () => {
     void handleTryOnGeneration(selectedProduct);
   });
@@ -1067,7 +1116,7 @@ function buildGenerationPanel(selectedProduct) {
     progress.className = "generation-progress";
     progress.setAttribute("role", "status");
     progress.textContent =
-      "YouCam is generating the preview. This can take a little while.";
+      "Your virtual clothing preview is being created. This can take a little while.";
     panel.append(progress);
   }
 
@@ -1104,7 +1153,7 @@ async function handleTryOnGeneration(selectedProduct) {
   photoSelection.generationStatus = "processing";
   photoSelection.generationError = null;
   renderConversation();
-  setStatus("Creating the virtual try-on preview…");
+  setStatus("Creating your virtual clothing preview…");
 
   try {
     if (!photoSelection.taskId) {
@@ -1139,7 +1188,7 @@ async function handleTryOnGeneration(selectedProduct) {
     saveChatSession(session);
     renderConversation();
     scrollConversationToBottom({ smooth: true });
-    setStatus("Virtual try-on preview generated.");
+    setStatus("Your virtual clothing preview is ready.");
   } catch (error) {
     if (error?.name === "AbortError" || tryOnTaskController !== controller) {
       return;
@@ -1152,8 +1201,8 @@ async function handleTryOnGeneration(selectedProduct) {
     photoSelection.generationError =
       error instanceof Error
         ? error.message
-        : "The virtual try-on could not be generated. Please try again.";
-    setStatus("The virtual try-on preview could not be completed.");
+        : "The virtual clothing preview could not be created. Please try again.";
+    setStatus("The virtual clothing preview could not be completed.");
   } finally {
     if (tryOnTaskController === controller) {
       tryOnTaskController = null;

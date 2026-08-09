@@ -1,6 +1,6 @@
-# Skin AI
+# AccessWear
 
-Skin AI is a disability-first virtual clothing assistant. It helps people find garments that match their occasion, preferences, measurements, and access needs while reducing the number of clothes they may need to try on physically.
+AccessWear is an accessible clothing assistant designed with disabled people in mind. It helps users find garments around their occasion, preferences, measurements, and individual access needs while reducing unnecessary physical try-ons.
 
 Virtual try-on is a visual preview only. It is not proof that a garment fits. Fit and compatibility information must come from product measurements, user-provided measurements, and explicit garment attributes.
 

@@ -5,34 +5,75 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="A disability-first clothing assistant for finding garments around individual access needs."
+      content="AccessWear helps disabled people find clothing around their access needs and preview selected items before a physical try-on."
     />
-    <title>Skin AI — clothing that works for you</title>
+    <title>AccessWear — designed with disabled people in mind</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <div class="page-shell">
       <header class="site-header">
-        <a class="brand" href="/" aria-label="Skin AI home">
-          <span class="brand-mark" aria-hidden="true">S</span>
-          <span>Skin AI</span>
+        <a class="brand" href="/" aria-label="AccessWear home">
+          <span class="brand-mark" aria-hidden="true">♥</span>
+          <span class="brand-copy">
+            <span class="brand-name">AccessWear</span>
+            <span class="brand-tagline">Designed with disabled people in mind.</span>
+          </span>
         </a>
         <button class="quiet-button" id="clear-chat" type="button">
-          Start over
+          <span aria-hidden="true">↻</span>
+          <span>Start over</span>
         </button>
       </header>
 
       <main>
-        <section class="intro" aria-labelledby="page-title">
-          <p class="eyebrow">Disability-first clothing search</p>
-          <h1 id="page-title">Find clothes that work with how you dress.</h1>
-          <p class="intro-copy">
-            Tell me what makes dressing easier or harder for you. I’ll ask only
-            for useful details and show what the product evidence confirms.
-          </p>
-          <div class="privacy-note">
-            <span aria-hidden="true">●</span>
-            This conversation is kept in this browser tab for your session.
+        <section class="hero" aria-labelledby="page-title">
+          <div class="hero-copy">
+            <p class="eyebrow">
+              <span aria-hidden="true">♥</span> Accessible clothing, designed
+              with disabled people in mind
+            </p>
+            <h1 id="page-title">
+              Find clothes that<br />
+              work for <span>you</span> —<br />
+              with fewer try-ons.
+            </h1>
+            <p class="intro-copy">
+              AccessWear is clothing search designed with disabled people in
+              mind. Tell me what makes dressing easier, painful, tiring or
+              inaccessible. I’ll compare documented access features and help
+              you preview selected clothes before a physical try-on.
+            </p>
+          </div>
+
+          <div class="hero-visual">
+            <img
+              src="/images/accessibility-hero.png"
+              alt="People browsing accessible clothing, including a wheelchair user"
+            />
+            <ul class="hero-callouts" aria-label="How AccessWear can help">
+              <li class="hero-callout hero-callout-dressing">
+                <span class="hero-callout-icon" aria-hidden="true">↔</span>
+                <span>
+                  <strong>Easier dressing</strong>
+                  <small>Openings and fastenings</small>
+                </span>
+              </li>
+              <li class="hero-callout hero-callout-evidence">
+                <span class="hero-callout-icon" aria-hidden="true">✓</span>
+                <span>
+                  <strong>Less guesswork</strong>
+                  <small>Only documented details</small>
+                </span>
+              </li>
+              <li class="hero-callout hero-callout-preview">
+                <span class="hero-callout-icon" aria-hidden="true">◎</span>
+                <span>
+                  <strong>Fewer try-ons</strong>
+                  <small>Preview selected clothes</small>
+                </span>
+              </li>
+            </ul>
           </div>
         </section>
 
@@ -48,19 +89,21 @@
           </div>
 
           <form class="composer" id="chat-form">
-            <label for="message-input">What are you looking for?</label>
+            <label for="message-input">
+              What clothing do you need, and what would make it easier?
+            </label>
             <div class="composer-row">
               <textarea
                 id="message-input"
                 name="message"
-                rows="3"
+                rows="2"
                 maxlength="2000"
-                placeholder="For example: I need a wedding dress with a front opening and an easy-to-grip fastening."
+                placeholder="Describe the clothing you need and what makes dressing easier..."
                 required
               ></textarea>
               <button class="send-button" id="send-button" type="submit">
+                <span aria-hidden="true">➤</span>
                 <span>Send</span>
-                <span aria-hidden="true">→</span>
               </button>
             </div>
             <p class="composer-help">
@@ -76,13 +119,22 @@
           aria-labelledby="alteration-section-heading"
         >
           <div class="alteration-section-header">
-            <p class="eyebrow">Alteration support</p>
-            <h2 id="alteration-section-heading">Find a nearby tailor</h2>
-            <p>
-              This location search is separate from the clothing chat and does
-              not call the LLM. Choose your current location or search using a
-              town, city or postcode.
+            <p class="eyebrow">Accessible alteration support</p>
+            <h2 id="alteration-section-heading">
+              Find a nearby alteration service
+            </h2>
+            <p class="alteration-description">
+              Clothing changes can make dressing easier. Search for nearby
+              tailors and alteration services using your current location, town,
+              city or postcode. We only show accessibility information when it
+              is listed.
             </p>
+            <img
+              class="alteration-illustration"
+              src="/images/alteration-support-hero.png"
+              alt="Tailor assisting a wheelchair user with clothing alterations"
+              loading="lazy"
+            />
           </div>
 
           <div
@@ -94,17 +146,19 @@
       </main>
 
       <footer>
-        Virtual try-on is a visual preview, not proof of physical fit.
+        Virtual previews may reduce unnecessary physical try-ons, but they do
+        not prove fit, comfort or accessibility.
       </footer>
     </div>
 
     <template id="welcome-template">
       <article class="message assistant-message">
-        <p class="message-label">Skin AI</p>
+        <p class="message-label">AccessWear</p>
         <p>
-          Hi, I can help you look for clothing based on the occasion, garment
-          type, measurements and the features that make dressing accessible for
-          you. What would you like to find?
+          Welcome to AccessWear, clothing search designed with disabled people
+          in mind. Tell me what you want to wear and what would make it easier
+          to put on, fasten, move in or take off. I’ll use documented product
+          details and can help you preview selected items virtually.
         </p>
       </article>
     </template>
