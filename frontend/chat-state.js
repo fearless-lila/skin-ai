@@ -24,17 +24,75 @@ export function buildChatRequest(session, currentMessage) {
   return {
     conversationId: session.conversationId,
     currentMessage: message,
-    recentMessages: session.recentMessages,
+    recentMessages: session.recentMessages.map(({ role, content }) => ({
+      role,
+      content
+    })),
     conversationState: session.conversationState
+  };
+}
+
+export function addTryOnResultMessage(
+  session,
+  { taskId, productId, productName, resultUrl }
+) {
+  const normalizedTaskId = String(taskId ?? "").trim();
+  const normalizedProductId = String(productId ?? "").trim();
+  const normalizedProductName = String(productName ?? "").trim();
+  const normalizedResultUrl = String(resultUrl ?? "").trim();
+
+  if (
+    !normalizedTaskId ||
+    !normalizedProductId ||
+    !normalizedProductName ||
+    !normalizedResultUrl
+  ) {
+    throw new TypeError("A complete virtual try-on result is required.");
+  }
+
+  const resultAlreadyRecorded = session.recentMessages.some(
+    (message) =>
+      message.attachment?.type === "try_on_result" &&
+      message.attachment.taskId === normalizedTaskId
+  );
+  if (resultAlreadyRecorded) return session;
+
+  const resultMessage = {
+    role: "assistant",
+    content: `Here is your virtual try-on preview with ${normalizedProductName}.`,
+    attachment: {
+      type: "try_on_result",
+      taskId: normalizedTaskId,
+      productId: normalizedProductId,
+      imageUrl: normalizedResultUrl,
+      alt: `AI-generated virtual try-on preview using ${normalizedProductName}`
+    }
+  };
+
+  return {
+    ...session,
+    recentMessages: appendBoundedMessages(session.recentMessages, [resultMessage])
   };
 }
 
 export function applyChatResponse(session, currentMessage, response) {
   assertChatResponseShape(response);
 
+  const assistantMessage = {
+    role: "assistant",
+    content: response.reply,
+    ...(response.searchPerformed
+      ? {
+          attachment: {
+            type: "product_results",
+            results: response.results
+          }
+        }
+      : {})
+  };
   const recentMessages = appendBoundedMessages(session.recentMessages, [
     { role: "user", content: String(currentMessage).trim() },
-    { role: "assistant", content: response.reply }
+    assistantMessage
   ]);
   const searchResultIds = response.searchPerformed
     ? collectDisplayedProductIds(response.results)
@@ -65,7 +123,9 @@ export function loadChatSession(storage = globalThis.sessionStorage) {
     if (!saved) return createEmptyChatSession();
 
     const session = JSON.parse(saved);
-    return isUsableSession(session) ? session : createEmptyChatSession();
+    return isUsableSession(session)
+      ? migrateLegacyProductResults(session)
+      : createEmptyChatSession();
   } catch {
     return createEmptyChatSession();
   }
@@ -95,6 +155,34 @@ export function selectProductForTryOn(session, product) {
       ...session.conversationState,
       selectedProductId: product.id
     }
+  };
+}
+
+export function activateProductResults(session, results) {
+  if (
+    !results ||
+    typeof results !== "object" ||
+    !Array.isArray(results.compatibleProducts) ||
+    !Array.isArray(results.productsWithMissingInformation)
+  ) {
+    throw new TypeError("A complete product result set is required.");
+  }
+
+  const displayedProductIds = collectDisplayedProductIds(results);
+  const selectedProductId = displayedProductIds.includes(
+    session.conversationState.selectedProductId
+  )
+    ? session.conversationState.selectedProductId
+    : null;
+
+  return {
+    ...session,
+    conversationState: {
+      ...session.conversationState,
+      lastDisplayedProductIds: displayedProductIds,
+      selectedProductId
+    },
+    displayResults: results
   };
 }
 
@@ -131,8 +219,81 @@ function isUsableSession(session) {
         typeof session.conversationId === "string") &&
       Array.isArray(session.recentMessages) &&
       session.recentMessages.length <= MAX_RECENT_MESSAGES &&
+      session.recentMessages.every(isUsableMessage) &&
       session.conversationState &&
       typeof session.conversationState === "object" &&
       Array.isArray(session.conversationState.lastDisplayedProductIds)
   );
+}
+
+function isUsableMessage(message) {
+  if (
+    !message ||
+    typeof message !== "object" ||
+    !["user", "assistant"].includes(message.role) ||
+    typeof message.content !== "string"
+  ) {
+    return false;
+  }
+
+  if (message.attachment === undefined) return true;
+
+  const attachment = message.attachment;
+  if (
+    message.role !== "assistant" ||
+    !attachment ||
+    typeof attachment !== "object"
+  ) {
+    return false;
+  }
+
+  if (attachment.type === "try_on_result") {
+    return Boolean(
+      typeof attachment.taskId === "string" &&
+        typeof attachment.productId === "string" &&
+        typeof attachment.imageUrl === "string" &&
+        typeof attachment.alt === "string"
+    );
+  }
+
+  if (attachment.type === "product_results") {
+    return Boolean(
+      attachment.results &&
+        typeof attachment.results === "object" &&
+        Array.isArray(attachment.results.compatibleProducts) &&
+        Array.isArray(attachment.results.productsWithMissingInformation)
+    );
+  }
+
+  return false;
+}
+
+function migrateLegacyProductResults(session) {
+  if (
+    !session.displayResults ||
+    session.recentMessages.some(
+      (message) => message.attachment?.type === "product_results"
+    )
+  ) {
+    return session;
+  }
+
+  const messageIndex = session.recentMessages.findLastIndex(
+    (message) => message.role === "assistant" && message.attachment === undefined
+  );
+  if (messageIndex < 0) return session;
+
+  const recentMessages = [...session.recentMessages];
+  recentMessages[messageIndex] = {
+    ...recentMessages[messageIndex],
+    attachment: {
+      type: "product_results",
+      results: session.displayResults
+    }
+  };
+
+  return {
+    ...session,
+    recentMessages
+  };
 }

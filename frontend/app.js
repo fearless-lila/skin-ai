@@ -1,4 +1,6 @@
 import {
+  activateProductResults,
+  addTryOnResultMessage,
   applyChatResponse,
   buildChatRequest,
   clearChatSession,
@@ -27,7 +29,6 @@ const input = document.querySelector("#message-input");
 const sendButton = document.querySelector("#send-button");
 const clearButton = document.querySelector("#clear-chat");
 const messageList = document.querySelector("#message-list");
-const resultsRegion = document.querySelector("#results");
 const statusRegion = document.querySelector("#request-status");
 const welcomeTemplate = document.querySelector("#welcome-template");
 
@@ -41,7 +42,6 @@ let turnstileToken = null;
 let turnstileRenderTimer = null;
 
 renderConversation();
-renderResults(session.displayResults);
 
 form.addEventListener("submit", handleSubmit);
 input.addEventListener("keydown", (event) => {
@@ -54,7 +54,6 @@ clearButton.addEventListener("click", () => {
   resetPhotoSelection();
   session = clearChatSession();
   renderConversation();
-  renderResults(null);
   setStatus("Conversation cleared.");
   input.focus();
 });
@@ -94,8 +93,7 @@ async function handleSubmit(event) {
       resetPhotoSelection();
     }
     saveChatSession(session);
-    appendMessage("assistant", body.reply);
-    renderResults(session.displayResults);
+    renderConversation();
     setStatus(body.searchPerformed ? "Search complete." : "Reply received.");
   } catch (error) {
     appendError(
@@ -111,6 +109,7 @@ async function handleSubmit(event) {
 }
 
 function renderConversation() {
+  removeTurnstileWidget();
   messageList.replaceChildren();
 
   if (session.recentMessages.length === 0) {
@@ -118,12 +117,25 @@ function renderConversation() {
     return;
   }
 
-  for (const message of session.recentMessages) {
-    appendMessage(message.role, message.content);
+  const currentResultsMessageIndex = session.recentMessages.findLastIndex(
+    (message) =>
+      message.attachment?.type === "product_results" &&
+      productResultsMatch(message.attachment.results, session.displayResults)
+  );
+
+  for (const [index, message] of session.recentMessages.entries()) {
+    appendMessage(message.role, message.content, message.attachment, {
+      currentProductResults: index === currentResultsMessageIndex
+    });
   }
 }
 
-function appendMessage(role, content) {
+function appendMessage(
+  role,
+  content,
+  attachment = null,
+  { currentProductResults = false } = {}
+) {
   const message = document.createElement("article");
   message.className = `message ${role}-message`;
 
@@ -135,7 +147,43 @@ function appendMessage(role, content) {
   text.textContent = content;
 
   message.append(label, text);
+
+  if (attachment?.type === "product_results") {
+    message.classList.add("has-product-results");
+    message.append(
+      buildProductResults(attachment.results, {
+        current: currentProductResults
+      })
+    );
+  } else if (attachment?.type === "try_on_result") {
+    const figure = document.createElement("figure");
+    figure.className = "message-image-attachment";
+
+    const image = document.createElement("img");
+    image.src = attachment.imageUrl;
+    image.alt = attachment.alt;
+    image.loading = "lazy";
+    image.referrerPolicy = "no-referrer";
+
+    const fallback = document.createElement("p");
+    fallback.className = "message-image-error";
+    fallback.hidden = true;
+    fallback.textContent =
+      "This preview image is no longer available. You can generate a new preview from the selected product.";
+    image.addEventListener("error", () => {
+      image.remove();
+      fallback.hidden = false;
+    });
+
+    const caption = document.createElement("figcaption");
+    caption.textContent =
+      "AI-generated visual approximation only. It does not confirm measurements, comfort or physical fit.";
+    figure.append(image, fallback, caption);
+    message.append(figure);
+  }
+
   messageList.append(message);
+  return message;
 }
 
 function appendError(content) {
@@ -152,15 +200,30 @@ function appendError(content) {
   messageList.append(error);
 }
 
-function renderResults(results) {
-  removeTurnstileWidget();
-  resultsRegion.replaceChildren();
-  if (!results) return;
+function productResultsMatch(first, second) {
+  if (!first || !second) return false;
 
+  const collectIds = (results) => [
+    ...(results.compatibleProducts ?? []),
+    ...(results.productsWithMissingInformation ?? [])
+  ].map(({ product }) => product.id);
+  const firstIds = collectIds(first);
+  const secondIds = collectIds(second);
+
+  return (
+    firstIds.length === secondIds.length &&
+    firstIds.every((productId, index) => productId === secondIds[index])
+  );
+}
+
+function buildProductResults(results, { current }) {
+  const container = document.createElement("section");
+  container.className = "message-results";
+  container.setAttribute("aria-label", "Clothing matches");
   const header = document.createElement("div");
   header.className = "results-header";
 
-  const heading = document.createElement("h2");
+  const heading = document.createElement("h3");
   heading.textContent = "Clothing matches";
   header.append(heading);
 
@@ -171,12 +234,20 @@ function renderResults(results) {
     header.append(notice);
   }
 
-  resultsRegion.append(header);
-  appendProductGroup("Confirmed matches", results.compatibleProducts, "compatible");
+  container.append(header);
   appendProductGroup(
+    container,
+    "Confirmed matches",
+    results.compatibleProducts,
+    "compatible",
+    { current, resultSet: results }
+  );
+  appendProductGroup(
+    container,
     "More information needed",
     results.productsWithMissingInformation,
-    "missing"
+    "missing",
+    { current, resultSet: results }
   );
 
   if (
@@ -187,13 +258,24 @@ function renderResults(results) {
     empty.className = "empty-results";
     empty.textContent =
       "No catalogue items met these requirements. Try changing one preference or requirement.";
-    resultsRegion.append(empty);
+    container.append(empty);
   }
 
-  appendTryOnSelection(results);
+  if (current) {
+    const tryOnSelection = buildTryOnSelection(results);
+    if (tryOnSelection) container.append(tryOnSelection);
+  }
+
+  return container;
 }
 
-function appendProductGroup(title, products, kind) {
+function appendProductGroup(
+  container,
+  title,
+  products,
+  kind,
+  { current, resultSet }
+) {
   if (!products?.length) return;
 
   const section = document.createElement("section");
@@ -204,16 +286,18 @@ function appendProductGroup(title, products, kind) {
 
   const grid = document.createElement("div");
   grid.className = "product-grid";
-  for (const result of products) grid.append(createProductCard(result, kind));
+  for (const result of products) {
+    grid.append(createProductCard(result, kind, { current, resultSet }));
+  }
 
   section.append(heading, grid);
-  resultsRegion.append(section);
+  container.append(section);
 }
 
-function createProductCard(result, kind) {
+function createProductCard(result, kind, { current, resultSet }) {
   const { product, compatibility } = result;
   const isSelected =
-    session.conversationState.selectedProductId === product.id;
+    current && session.conversationState.selectedProductId === product.id;
   const card = document.createElement("article");
   card.className = "product-card";
   card.classList.toggle("selected", isSelected);
@@ -287,7 +371,9 @@ function createProductCard(result, kind) {
     tryOnButton.type = "button";
     tryOnButton.setAttribute("aria-pressed", String(isSelected));
     tryOnButton.textContent = isSelected ? "Selected for try-on" : "Try this on";
-    tryOnButton.addEventListener("click", () => handleTryOnSelection(product));
+    tryOnButton.addEventListener("click", () =>
+      handleTryOnSelection(product, resultSet)
+    );
     actions.append(tryOnButton);
   }
 
@@ -298,14 +384,18 @@ function createProductCard(result, kind) {
   return card;
 }
 
-function handleTryOnSelection(product) {
+function handleTryOnSelection(product, resultSet) {
   try {
-    if (session.conversationState.selectedProductId !== product.id) {
+    if (
+      session.conversationState.selectedProductId !== product.id ||
+      !productResultsMatch(session.displayResults, resultSet)
+    ) {
       resetPhotoSelection();
     }
+    session = activateProductResults(session, resultSet);
     session = selectProductForTryOn(session, product);
     saveChatSession(session);
-    renderResults(session.displayResults);
+    renderConversation();
     setStatus(`${product.name} selected for virtual try-on.`);
     document.querySelector("#try-on-selection")?.focus();
   } catch (error) {
@@ -315,16 +405,16 @@ function handleTryOnSelection(product) {
   }
 }
 
-function appendTryOnSelection(results) {
+function buildTryOnSelection(results) {
   const selectedProductId = session.conversationState.selectedProductId;
-  if (!selectedProductId) return;
+  if (!selectedProductId) return null;
 
   const selectedResult = [
     ...(results.compatibleProducts ?? []),
     ...(results.productsWithMissingInformation ?? [])
   ].find(({ product }) => product.id === selectedProductId);
 
-  if (!selectedResult?.product.virtualTryOnAvailable) return;
+  if (!selectedResult?.product.virtualTryOnAvailable) return null;
 
   const panel = document.createElement("section");
   panel.id = "try-on-selection";
@@ -364,7 +454,7 @@ function appendTryOnSelection(results) {
 
   const form = buildPhotoPreparationForm(selectedResult.product);
   panel.append(label, heading, explanation, guidance, form, disclaimer);
-  resultsRegion.append(panel);
+  return panel;
 }
 
 function buildPhotoPreparationForm(selectedProduct) {
@@ -482,7 +572,7 @@ async function handlePhotoChange(file) {
   resetPhotoSelection();
   const validationGeneration = photoValidationGeneration;
   if (!file) {
-    renderResults(session.displayResults);
+    renderConversation();
     return;
   }
 
@@ -493,7 +583,7 @@ async function handlePhotoChange(file) {
 
   if (!validation.valid) {
     photoSelection.error = validation.error;
-    renderResults(session.displayResults);
+    renderConversation();
     setStatus("The selected photograph cannot be used.");
     document.querySelector("#photo-error")?.focus();
     return;
@@ -514,7 +604,7 @@ async function handlePhotoChange(file) {
     resultUrl: null,
     error: null
   };
-  renderResults(session.displayResults);
+  renderConversation();
   setStatus("Photograph selected. Review the consent statement to continue.");
   document.querySelector("#try-on-selection")?.focus();
 }
@@ -575,7 +665,7 @@ async function handlePhotoUpload() {
   photoUploadController = controller;
   photoSelection.uploading = true;
   photoSelection.error = null;
-  renderResults(session.displayResults);
+  renderConversation();
   setStatus("Creating a secure upload and sending the photograph…");
 
   try {
@@ -606,7 +696,7 @@ async function handlePhotoUpload() {
     if (photoUploadController === controller) {
       photoSelection.uploading = false;
       photoUploadController = null;
-      renderResults(session.displayResults);
+      renderConversation();
       document.querySelector(
         photoSelection.error ? "#photo-error" : "#try-on-selection"
       )?.focus();
@@ -627,18 +717,11 @@ function buildGenerationPanel(selectedProduct) {
   panel.append(heading);
 
   if (photoSelection.resultUrl) {
-    const resultImage = document.createElement("img");
-    resultImage.className = "try-on-result-image";
-    resultImage.src = photoSelection.resultUrl;
-    resultImage.alt =
-      `AI-generated virtual try-on preview using ${selectedProduct.name}`;
-    resultImage.referrerPolicy = "no-referrer";
-
-    const resultNote = document.createElement("p");
-    resultNote.className = "try-on-result-note";
-    resultNote.textContent =
-      "This AI-generated image is a visual approximation. It does not confirm garment measurements, comfort or physical fit.";
-    panel.append(resultImage, resultNote);
+    const confirmation = document.createElement("p");
+    confirmation.className = "generation-complete";
+    confirmation.textContent =
+      "The generated image has been added to the conversation above, where it stays with your recent messages.";
+    panel.append(confirmation);
     return panel;
   }
 
@@ -683,7 +766,7 @@ function buildGenerationPanel(selectedProduct) {
           ? "Try generation again"
           : "Generate virtual try-on";
   generateButton.addEventListener("click", () => {
-    void handleTryOnGeneration();
+    void handleTryOnGeneration(selectedProduct);
   });
   panel.append(explanation, generateButton);
 
@@ -709,7 +792,7 @@ function buildGenerationPanel(selectedProduct) {
   return panel;
 }
 
-async function handleTryOnGeneration() {
+async function handleTryOnGeneration(selectedProduct) {
   const selectedProductId = session.conversationState.selectedProductId;
   const taskRequiresVerification = !photoSelection.taskId;
   const tokenForRequest = turnstileToken;
@@ -728,7 +811,7 @@ async function handleTryOnGeneration() {
   tryOnTaskController = controller;
   photoSelection.generationStatus = "processing";
   photoSelection.generationError = null;
-  renderResults(session.displayResults);
+  renderConversation();
   setStatus("Creating the virtual try-on preview…");
 
   try {
@@ -755,6 +838,18 @@ async function handleTryOnGeneration() {
 
     photoSelection.generationStatus = "succeeded";
     photoSelection.resultUrl = result.resultUrl;
+    session = addTryOnResultMessage(session, {
+      taskId: photoSelection.taskId,
+      productId: selectedProduct.id,
+      productName: selectedProduct.name,
+      resultUrl: result.resultUrl
+    });
+    saveChatSession(session);
+    renderConversation();
+    messageList.lastElementChild?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest"
+    });
     setStatus("Virtual try-on preview generated.");
   } catch (error) {
     if (error?.name === "AbortError" || tryOnTaskController !== controller) {
@@ -773,7 +868,7 @@ async function handleTryOnGeneration() {
   } finally {
     if (tryOnTaskController === controller) {
       tryOnTaskController = null;
-      renderResults(session.displayResults);
+      renderConversation();
       document.querySelector(
         photoSelection.generationError
           ? "#generation-error"

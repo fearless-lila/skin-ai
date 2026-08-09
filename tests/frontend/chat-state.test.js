@@ -4,6 +4,8 @@ import test from "node:test";
 import {
   MAX_RECENT_MESSAGES,
   SESSION_STORAGE_KEY,
+  activateProductResults,
+  addTryOnResultMessage,
   applyChatResponse,
   buildChatRequest,
   clearChatSession,
@@ -64,6 +66,65 @@ test("builds only the backend chat-request fields", () => {
   });
 });
 
+test("records a try-on image in local history without sending image data to the backend", () => {
+  const session = addTryOnResultMessage(createEmptyChatSession(), {
+    taskId: "task-123",
+    productId: "mock-dress-001",
+    productName: "Avery Front-Zip Dress",
+    resultUrl: "https://example.com/generated-preview.jpg"
+  });
+
+  assert.deepEqual(session.recentMessages[0], {
+    role: "assistant",
+    content: "Here is your virtual try-on preview with Avery Front-Zip Dress.",
+    attachment: {
+      type: "try_on_result",
+      taskId: "task-123",
+      productId: "mock-dress-001",
+      imageUrl: "https://example.com/generated-preview.jpg",
+      alt: "AI-generated virtual try-on preview using Avery Front-Zip Dress"
+    }
+  });
+
+  assert.deepEqual(buildChatRequest(session, "Does this colour suit me?"), {
+    conversationId: null,
+    currentMessage: "Does this colour suit me?",
+    recentMessages: [
+      {
+        role: "assistant",
+        content: "Here is your virtual try-on preview with Avery Front-Zip Dress."
+      }
+    ],
+    conversationState: {
+      currentRequirements: null,
+      lastDisplayedProductIds: [],
+      selectedProductId: null
+    }
+  });
+});
+
+test("restores try-on image messages and does not record the same task twice", () => {
+  const storage = memoryStorage();
+  const first = addTryOnResultMessage(createEmptyChatSession(), {
+    taskId: "task-123",
+    productId: "mock-dress-001",
+    productName: "Avery Front-Zip Dress",
+    resultUrl: "https://example.com/generated-preview.jpg"
+  });
+  const duplicate = addTryOnResultMessage(first, {
+    taskId: "task-123",
+    productId: "mock-dress-001",
+    productName: "Avery Front-Zip Dress",
+    resultUrl: "https://example.com/generated-preview.jpg"
+  });
+
+  saveChatSession(duplicate, storage);
+
+  assert.equal(duplicate, first);
+  assert.deepEqual(loadChatSession(storage), first);
+  assert.equal(first.recentMessages.length, 1);
+});
+
 test("applies a response and records bounded conversation context", () => {
   const oldMessages = Array.from({ length: MAX_RECENT_MESSAGES }, (_, index) => ({
     role: index % 2 === 0 ? "user" : "assistant",
@@ -72,7 +133,12 @@ test("applies a response and records bounded conversation context", () => {
   const session = createEmptyChatSession();
   session.recentMessages = oldMessages;
 
-  const next = applyChatResponse(session, "Find a front-opening dress", response());
+  const chatResponse = response();
+  const next = applyChatResponse(
+    session,
+    "Find a front-opening dress",
+    chatResponse
+  );
 
   assert.equal(next.conversationId, "conversation-456");
   assert.equal(next.recentMessages.length, MAX_RECENT_MESSAGES);
@@ -82,11 +148,61 @@ test("applies a response and records bounded conversation context", () => {
   });
   assert.deepEqual(next.recentMessages.at(-1), {
     role: "assistant",
-    content: "I found a front-opening option."
+    content: "I found a front-opening option.",
+    attachment: {
+      type: "product_results",
+      results: chatResponse.results
+    }
   });
   assert.deepEqual(next.conversationState.lastDisplayedProductIds, [
     "mock-dress-001"
   ]);
+});
+
+test("keeps product cards with their assistant message but strips them from the next request", () => {
+  const chatResponse = response();
+  const session = applyChatResponse(
+    createEmptyChatSession(),
+    "Find a front-opening dress",
+    chatResponse
+  );
+  const storage = memoryStorage();
+
+  saveChatSession(session, storage);
+  const restored = loadChatSession(storage);
+  const request = buildChatRequest(restored, "Show me a cardigan instead");
+
+  assert.deepEqual(
+    restored.recentMessages.at(-1).attachment.results,
+    chatResponse.results
+  );
+  assert.deepEqual(request.recentMessages.at(-1), {
+    role: "assistant",
+    content: "I found a front-opening option."
+  });
+  assert.equal("attachment" in request.recentMessages.at(-1), false);
+});
+
+test("moves legacy bottom-of-page results into the saved assistant message", () => {
+  const storage = memoryStorage();
+  const legacySession = createEmptyChatSession();
+  legacySession.recentMessages = [
+    { role: "user", content: "Find a front-opening dress" },
+    { role: "assistant", content: "I found a front-opening option." }
+  ];
+  legacySession.displayResults = response().results;
+  storage.setItem(SESSION_STORAGE_KEY, JSON.stringify(legacySession));
+
+  const restored = loadChatSession(storage);
+
+  assert.equal(
+    restored.recentMessages.at(-1).attachment.type,
+    "product_results"
+  );
+  assert.deepEqual(
+    restored.recentMessages.at(-1).attachment.results,
+    legacySession.displayResults
+  );
 });
 
 test("keeps displayed product context when no new search runs", () => {
@@ -168,4 +284,31 @@ test("rejects unavailable or undisplayed try-on selections", () => {
       }),
     /not in the current results/
   );
+});
+
+test("reactivates an older result set before selecting its product", () => {
+  const session = createEmptyChatSession();
+  session.conversationState.lastDisplayedProductIds = ["mock-dress-001"];
+  session.displayResults = response().results;
+  const olderResults = {
+    ...response().results,
+    compatibleProducts: [
+      {
+        product: { id: "mock-cardigan-001", virtualTryOnAvailable: true },
+        compatibility: {}
+      }
+    ]
+  };
+
+  const activated = activateProductResults(session, olderResults);
+  const selected = selectProductForTryOn(
+    activated,
+    olderResults.compatibleProducts[0].product
+  );
+
+  assert.deepEqual(activated.conversationState.lastDisplayedProductIds, [
+    "mock-cardigan-001"
+  ]);
+  assert.equal(activated.displayResults, olderResults);
+  assert.equal(selected.conversationState.selectedProductId, "mock-cardigan-001");
 });

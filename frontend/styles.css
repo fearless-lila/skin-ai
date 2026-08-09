@@ -198,6 +198,35 @@ h1 {
   color: var(--plum);
 }
 
+.message-image-attachment {
+  width: min(100%, 520px);
+  margin: 14px 0 0;
+}
+
+.message-image-attachment img {
+  width: 100%;
+  max-height: 760px;
+  display: block;
+  border: 1px solid #bfd1c3;
+  border-radius: 14px;
+  object-fit: contain;
+  background: white;
+}
+
+.message-image-attachment figcaption,
+.message-image-error {
+  margin-top: 10px !important;
+  color: #3f5c49;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.message-image-error {
+  padding: 11px 13px;
+  border-left: 4px solid var(--sage-dark);
+  background: white;
+}
+
 .user-message {
   align-self: flex-end;
   border-bottom-right-radius: 5px;
@@ -219,24 +248,21 @@ h1 {
   color: #8b2f25;
 }
 
-.results {
-  border-top: 1px solid var(--line);
+.message.has-product-results {
+  width: min(1040px, 96%);
+  max-width: min(1040px, 96%);
 }
 
-.results:empty {
-  display: none;
+.message-results {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid #dfd5ca;
 }
 
-.results-header,
-.product-group,
-.empty-results {
-  padding: 28px clamp(20px, 4vw, 42px) 0;
-}
-
-.results-header h2 {
+.results-header h3 {
   margin: 0 0 10px;
   font-family: Georgia, serif;
-  font-size: clamp(1.7rem, 4vw, 2.4rem);
+  font-size: clamp(1.5rem, 3vw, 2rem);
   font-weight: 500;
   letter-spacing: -0.035em;
 }
@@ -251,7 +277,7 @@ h1 {
 }
 
 .product-group h3 {
-  margin: 0 0 15px;
+  margin: 20px 0 15px;
   font-size: 0.92rem;
   letter-spacing: 0.03em;
 }
@@ -394,7 +420,7 @@ h1 {
 }
 
 .try-on-selection {
-  margin: 30px clamp(20px, 4vw, 42px) 0;
+  margin: 26px 0 0;
   padding: 22px;
   border: 1px solid #bfd1c3;
   border-radius: 18px;
@@ -600,7 +626,7 @@ h1 {
 
 .generation-progress,
 .generation-error,
-.try-on-result-note {
+.generation-complete {
   margin-top: 14px !important;
   padding: 11px 13px;
   background: white;
@@ -618,28 +644,14 @@ h1 {
   font-weight: 750;
 }
 
-.try-on-result-image {
-  width: min(100%, 520px);
-  max-height: 760px;
-  display: block;
-  margin-top: 14px;
-  border: 1px solid #bfd1c3;
-  border-radius: 14px;
-  object-fit: contain;
-  background: white;
-}
-
-.try-on-result-note {
-  width: min(100%, 520px);
+.generation-complete {
   color: #3f5c49;
   border-left: 4px solid var(--sage-dark);
-  font-size: 0.84rem;
   font-weight: 700;
 }
 
 .empty-results {
-  margin: 0;
-  padding-bottom: 28px;
+  margin: 16px 0 0;
   color: var(--muted);
 }
 
@@ -760,6 +772,11 @@ footer {
 
   .message {
     max-width: 94%;
+  }
+
+  .message.has-product-results {
+    width: 96%;
+    max-width: 96%;
   }
 
   .product-card {
