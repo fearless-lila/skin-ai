@@ -5,6 +5,7 @@ import {
   MAX_RECENT_MESSAGES,
   SESSION_STORAGE_KEY,
   activateProductResults,
+  addTailorResultsMessage,
   addTryOnResultMessage,
   applyChatResponse,
   buildChatRequest,
@@ -123,6 +124,45 @@ test("restores try-on image messages and does not record the same task twice", (
   assert.equal(duplicate, first);
   assert.deepEqual(loadChatSession(storage), first);
   assert.equal(first.recentMessages.length, 1);
+});
+
+test("stores nearby tailors as a local assistant attachment only", () => {
+  const tailorResponse = {
+    locationLabel: "Leeds, West Yorkshire, United Kingdom",
+    radiusMetres: 8000,
+    attribution: "© OpenStreetMap contributors",
+    tailors: [
+      {
+        id: "node-42",
+        name: "City Alterations",
+        category: "Tailor and alterations",
+        address: "1 Sample Street, Leeds",
+        distanceMetres: 430,
+        wheelchair: "unknown",
+        alterationService: "unknown",
+        openingHours: null,
+        phone: null,
+        website: null,
+        mapUrl: "https://www.openstreetmap.org/node/42"
+      }
+    ]
+  };
+  const session = addTailorResultsMessage(
+    createEmptyChatSession(),
+    tailorResponse
+  );
+  const storage = memoryStorage();
+  saveChatSession(session, storage);
+
+  const restored = loadChatSession(storage);
+  const request = buildChatRequest(restored, "Show me another dress");
+
+  assert.equal(restored.recentMessages[0].attachment.type, "tailor_results");
+  assert.deepEqual(restored.recentMessages[0].attachment.tailors, tailorResponse.tailors);
+  assert.deepEqual(request.recentMessages, [
+    { role: "assistant", content: "I found 1 nearby tailor shop." }
+  ]);
+  assert.equal("attachment" in request.recentMessages[0], false);
 });
 
 test("applies a response and records bounded conversation context", () => {

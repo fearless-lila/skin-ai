@@ -6,6 +6,7 @@ import mockCatalogue from "../data/mock-catalogue.json" with { type: "json" };
 import {
   CHAT_API_PATH,
   MAX_CHAT_REQUEST_BYTES,
+  TAILORS_API_PATH,
   TRY_ON_TASKS_API_PATH,
   TRY_ON_UPLOAD_API_PATH,
   createWorker
@@ -216,6 +217,57 @@ test("POST /api/chat returns 429 before OpenAI when rate limited", async () => {
   assert.equal(response.headers.get("Retry-After"), "60");
   assert.equal(body.error.code, "CHAT_RATE_LIMITED");
   assert.equal(providerCalls, 0);
+});
+
+test("GET /api/tailors returns normalized nearby services without OpenAI", async () => {
+  let providerCalls = 0;
+  let rateLimitCalls = 0;
+  const worker = createWorker({
+    logger: silentLogger,
+    fetchImpl: async (url) => {
+      providerCalls += 1;
+      assert.match(url, /^https:\/\/overpass-api\.de\/api\/interpreter/);
+      return new Response(
+        JSON.stringify({
+          elements: [
+            {
+              type: "node",
+              id: 42,
+              lat: 51.501,
+              lon: -0.125,
+              tags: { name: "Central Alterations", shop: "tailor" }
+            }
+          ]
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+  });
+
+  const response = await worker.fetch(
+    request({
+      path: `${TAILORS_API_PATH}?latitude=51.5007&longitude=-0.1246`,
+      method: "GET",
+      body: null,
+      contentType: null
+    }),
+    environment({
+      CHAT_RATE_LIMITER: {
+        async limit({ key }) {
+          rateLimitCalls += 1;
+          assert.equal(key, "tailors:unknown");
+          return { success: true };
+        }
+      }
+    })
+  );
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(body.locationLabel, "your current location");
+  assert.equal(body.tailors[0].name, "Central Alterations");
+  assert.equal(providerCalls, 1);
+  assert.equal(rateLimitCalls, 1);
 });
 
 test("POST /api/try-on/upload returns safe temporary upload instructions", async () => {

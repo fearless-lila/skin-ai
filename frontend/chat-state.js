@@ -75,6 +75,33 @@ export function addTryOnResultMessage(
   };
 }
 
+export function addTailorResultsMessage(session, response) {
+  if (!isUsableTailorResults(response)) {
+    throw new TypeError("A complete nearby-tailor response is required.");
+  }
+
+  const count = response.tailors.length;
+  const resultMessage = {
+    role: "assistant",
+    content:
+      count === 0
+        ? "I could not find a listed tailor nearby, but you can try another location."
+        : `I found ${count} nearby ${count === 1 ? "tailor shop" : "tailor shops"}.`,
+    attachment: {
+      type: "tailor_results",
+      locationLabel: response.locationLabel,
+      radiusMetres: response.radiusMetres,
+      tailors: response.tailors,
+      attribution: response.attribution
+    }
+  };
+
+  return {
+    ...session,
+    recentMessages: appendBoundedMessages(session.recentMessages, [resultMessage])
+  };
+}
+
 export function applyChatResponse(session, currentMessage, response) {
   assertChatResponseShape(response);
 
@@ -265,7 +292,33 @@ function isUsableMessage(message) {
     );
   }
 
+  if (attachment.type === "tailor_results") {
+    return isUsableTailorResults(attachment);
+  }
+
   return false;
+}
+
+function isUsableTailorResults(value) {
+  return Boolean(
+    value &&
+      typeof value === "object" &&
+      typeof value.locationLabel === "string" &&
+      Number.isFinite(value.radiusMetres) &&
+      Array.isArray(value.tailors) &&
+      value.tailors.length <= 8 &&
+      typeof value.attribution === "string" &&
+      value.tailors.every(
+        (tailor) =>
+          tailor &&
+          typeof tailor === "object" &&
+          typeof tailor.id === "string" &&
+          typeof tailor.name === "string" &&
+          typeof tailor.address === "string" &&
+          Number.isFinite(tailor.distanceMetres) &&
+          typeof tailor.mapUrl === "string"
+      )
+  );
 }
 
 function migrateLegacyProductResults(session) {

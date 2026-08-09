@@ -39,10 +39,16 @@ import {
   createTurnstileVerifier,
   enforceTryOnRateLimit
 } from "./try-on/protect-try-on-task.js";
+import {
+  TailorSearchError,
+  enforceTailorRateLimit,
+  findNearbyTailors
+} from "./tailors/find-nearby-tailors.js";
 
 export const CHAT_API_PATH = "/api/chat";
 export const TRY_ON_UPLOAD_API_PATH = "/api/try-on/upload";
 export const TRY_ON_TASKS_API_PATH = "/api/try-on/tasks";
+export const TAILORS_API_PATH = "/api/tailors";
 export const MAX_CHAT_REQUEST_BYTES = 32 * 1024;
 
 /**
@@ -138,6 +144,23 @@ export function createWorker({
       }
 
       try {
+        if (route.kind === "tailors") {
+          await enforceTailorRateLimit({
+            limiter: env.CHAT_RATE_LIMITER,
+            key: `tailors:${request.headers.get("CF-Connecting-IP") ?? "unknown"}`
+          });
+          const response = await findNearbyTailors(
+            {
+              query: url.searchParams.get("query"),
+              latitude: url.searchParams.get("latitude"),
+              longitude: url.searchParams.get("longitude")
+            },
+            { fetchImpl }
+          );
+
+          return jsonResponse(200, response, cors.headers);
+        }
+
         if (route.kind === "try-on-upload") {
           const requestProviderUpload = createYouCamUploadRequester({
             apiKey: env.YOUCAM_API_KEY,
@@ -297,6 +320,10 @@ function resolveApiRoute(pathname) {
     return { kind: "try-on-task-create", methods: ["POST"] };
   }
 
+  if (pathname === TAILORS_API_PATH) {
+    return { kind: "tailors", methods: ["GET"] };
+  }
+
   const statusMatch = pathname.match(
     /^\/api\/try-on\/tasks\/([A-Za-z0-9_-]{1,1024})$/
   );
@@ -311,6 +338,48 @@ function resolveApiRoute(pathname) {
 }
 
 function mapPublicError(error) {
+  if (
+    error instanceof TailorSearchError &&
+    error.code === "INVALID_TAILOR_SEARCH"
+  ) {
+    return {
+      status: 400,
+      code: "INVALID_TAILOR_SEARCH",
+      message: "Enter a town or postcode, or allow access to your current location."
+    };
+  }
+
+  if (
+    error instanceof TailorSearchError &&
+    error.code === "LOCATION_NOT_FOUND"
+  ) {
+    return {
+      status: 404,
+      code: "LOCATION_NOT_FOUND",
+      message: "That location could not be found. Try a town, city or postcode."
+    };
+  }
+
+  if (
+    error instanceof TailorSearchError &&
+    error.code === "TAILOR_SEARCH_RATE_LIMITED"
+  ) {
+    return {
+      status: 429,
+      code: "TAILOR_SEARCH_RATE_LIMITED",
+      message: "Too many location searches were requested. Please wait and try again.",
+      headers: { "Retry-After": "60" }
+    };
+  }
+
+  if (error instanceof TailorSearchError) {
+    return {
+      status: 503,
+      code: "TAILOR_SEARCH_UNAVAILABLE",
+      message: "Nearby tailor search is temporarily unavailable. Please try again."
+    };
+  }
+
   if (
     error instanceof ChatProtectionError &&
     error.code === "CHAT_RATE_LIMITED"

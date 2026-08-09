@@ -37,13 +37,15 @@
         </section>
 
         <section class="chat-panel" aria-label="Clothing assistant conversation">
-          <div
-            class="message-list"
-            id="message-list"
-            role="log"
-            aria-live="polite"
-            aria-relevant="additions"
-          ></div>
+          <div class="conversation-viewport" id="conversation-viewport">
+            <div
+              class="message-list"
+              id="message-list"
+              role="log"
+              aria-live="polite"
+              aria-relevant="additions"
+            ></div>
+          </div>
 
           <form class="composer" id="chat-form">
             <label for="message-input">What are you looking for?</label>
@@ -67,6 +69,27 @@
           </form>
 
           <p class="request-status" id="request-status" role="status"></p>
+        </section>
+
+        <section
+          class="alteration-section"
+          aria-labelledby="alteration-section-heading"
+        >
+          <div class="alteration-section-header">
+            <p class="eyebrow">Alteration support</p>
+            <h2 id="alteration-section-heading">Find a nearby tailor</h2>
+            <p>
+              This location search is separate from the clothing chat and does
+              not call the LLM. Choose your current location or search using a
+              town, city or postcode.
+            </p>
+          </div>
+
+          <div
+            class="alteration-controls"
+            id="tailor-finder-container"
+            aria-label="Find nearby alteration services"
+          ></div>
         </section>
       </main>
 

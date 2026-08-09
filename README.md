@@ -140,9 +140,17 @@ The repository includes a small accessible browser interface for the chat flow. 
 
 The frontend stores the bounded conversation context in the browser's `sessionStorage`. It restores that context after a refresh and removes it when the user selects **Start over**. Only the fields permitted by `chat-request.schema.json` are sent to the backend; locally cached product display data is never treated as trusted catalogue input.
 
+### Nearby tailor finder
+
+The clothing chat and alteration search are separate sections. The chat message history scrolls above its composer, and a visually distinct alteration section follows the complete chat panel after the message text box. The alteration section is part of the normal page flow and has no internal scroll area. It offers two explicit ways to find alteration support: use the browser's current location or submit a town, city, or postcode. Current-location access always requires the browser's permission prompt. Precise coordinates are sent through the Worker to OpenStreetMap only for the submitted search; they are not stored in chat history or sent to the LLM. A submitted location label and the display-safe shop results remain in the browser session.
+
+`GET /api/tailors` accepts either `latitude` and `longitude` or a `query`. The Worker validates and rate-limits the request, uses Nominatim only for an explicitly submitted text search, and queries Overpass for `craft=tailor`, `shop=tailor`, and `craft=dressmaker` listings within eight kilometres. It returns at most eight normalized results with distance, listed address, contact links, and any explicit wheelchair or alteration-service tags. Missing accessibility data is shown as unknown rather than inferred.
+
+The interface displays OpenStreetMap attribution and advises users to call ahead because community map listings may be incomplete or outdated. Public Nominatim and Overpass endpoints are appropriate only for this low-traffic hackathon demo: there is no autocomplete, provider responses use Cloudflare caching, and repeated searches use the existing Worker rate limiter. A larger production service should use a contracted provider or self-hosted infrastructure.
+
 ### Cloudflare Worker deployment
 
-The implemented Worker exposes `POST /api/chat`. It checks the browser origin, request method, content type, body size, and chat-request schema before calling OpenAI. It then runs the existing orchestration and returns either a validated chat response or a controlled public error. Provider error details and API keys are never returned to the browser.
+The implemented Worker exposes `POST /api/chat`, the YouCam routes, and `GET /api/tailors`. It checks the browser origin, request method, content type, body size where applicable, and request contract before calling an external provider. It then returns either a validated response or a controlled public error. Provider error details and API keys are never returned to the browser.
 
 Cloudflare's Git integration can build and deploy this repository after a push; Wrangler does not have to be installed on the developer's computer. Before deploying:
 
