@@ -75,33 +75,6 @@ export function addTryOnResultMessage(
   };
 }
 
-export function addTailorResultsMessage(session, response) {
-  if (!isUsableTailorResults(response)) {
-    throw new TypeError("A complete nearby-tailor response is required.");
-  }
-
-  const count = response.tailors.length;
-  const resultMessage = {
-    role: "assistant",
-    content:
-      count === 0
-        ? "I could not find a listed tailor nearby, but you can try another location."
-        : `I found ${count} nearby ${count === 1 ? "tailor shop" : "tailor shops"}.`,
-    attachment: {
-      type: "tailor_results",
-      locationLabel: response.locationLabel,
-      radiusMetres: response.radiusMetres,
-      tailors: response.tailors,
-      attribution: response.attribution
-    }
-  };
-
-  return {
-    ...session,
-    recentMessages: appendBoundedMessages(session.recentMessages, [resultMessage])
-  };
-}
-
 export function applyChatResponse(session, currentMessage, response) {
   assertChatResponseShape(response);
 
@@ -151,7 +124,7 @@ export function loadChatSession(storage = globalThis.sessionStorage) {
 
     const session = JSON.parse(saved);
     return isUsableSession(session)
-      ? migrateLegacyProductResults(session)
+      ? migrateLegacyProductResults(removeLegacyTailorResults(session))
       : createEmptyChatSession();
   } catch {
     return createEmptyChatSession();
@@ -348,5 +321,14 @@ function migrateLegacyProductResults(session) {
   return {
     ...session,
     recentMessages
+  };
+}
+
+function removeLegacyTailorResults(session) {
+  return {
+    ...session,
+    recentMessages: session.recentMessages.filter(
+      (message) => message.attachment?.type !== "tailor_results"
+    )
   };
 }

@@ -1,6 +1,5 @@
 import {
   activateProductResults,
-  addTailorResultsMessage,
   addTryOnResultMessage,
   applyChatResponse,
   buildChatRequest,
@@ -46,6 +45,7 @@ let tryOnTaskController = null;
 let turnstileWidgetId = null;
 let turnstileToken = null;
 let turnstileRenderTimer = null;
+let tailorSearchResults = null;
 
 renderConversation();
 renderTailorFinder();
@@ -60,6 +60,7 @@ input.addEventListener("keydown", (event) => {
 });
 clearButton.addEventListener("click", () => {
   resetPhotoSelection();
+  tailorSearchResults = null;
   session = clearChatSession();
   renderConversation();
   renderTailorFinder();
@@ -166,9 +167,6 @@ function appendMessage(
         current: currentProductResults
       })
     );
-  } else if (attachment?.type === "tailor_results") {
-    message.classList.add("has-tailor-results");
-    message.append(buildTailorResults(attachment));
   } else if (attachment?.type === "try_on_result") {
     const figure = document.createElement("figure");
     figure.className = "message-image-attachment";
@@ -284,7 +282,11 @@ function buildProductResults(results, { current }) {
 }
 
 function renderTailorFinder() {
-  tailorFinderContainer.replaceChildren(buildTailorFinder());
+  const finder = buildTailorFinder();
+  if (tailorSearchResults) {
+    finder.append(buildTailorResults(tailorSearchResults));
+  }
+  tailorFinderContainer.replaceChildren(finder);
 }
 
 function buildTailorFinder() {
@@ -356,14 +358,15 @@ function buildTailorFinder() {
 
 async function searchFromCurrentLocation(panel, progress) {
   if (typeof navigator.geolocation?.getCurrentPosition !== "function") {
-    appendError(
+    showTailorSearchError(
+      progress,
       "Current location is unavailable in this browser. Search using a town or postcode instead."
     );
-    scrollConversationToBottom();
     return;
   }
 
   setTailorFinderBusy(panel, true);
+  progress.removeAttribute("data-state");
   progress.textContent = "Waiting for location permission…";
 
   try {
@@ -385,13 +388,12 @@ async function searchFromCurrentLocation(panel, progress) {
     );
   } catch (error) {
     setTailorFinderBusy(panel, false);
-    progress.textContent = "";
-    appendError(
+    showTailorSearchError(
+      progress,
       error?.code === 1
         ? "Location permission was not granted. Search using a town or postcode instead."
         : "Your current location could not be read. Search using a town or postcode instead."
     );
-    scrollConversationToBottom();
     setStatus("The current location could not be used.");
   }
 }
@@ -403,6 +405,7 @@ async function requestTailorSearch(
   { alreadyBusy = false } = {}
 ) {
   if (!alreadyBusy) setTailorFinderBusy(panel, true);
+  progress.removeAttribute("data-state");
   progress.textContent = "Looking for nearby tailor shops…";
   setStatus("Looking for nearby tailor shops…");
 
@@ -420,23 +423,24 @@ async function requestTailorSearch(
       );
     }
 
-    session = addTailorResultsMessage(session, body);
-    saveChatSession(session);
-    renderConversation();
+    tailorSearchResults = body;
     renderTailorFinder();
-    scrollConversationToBottom({ smooth: true });
     setStatus("Nearby tailor search complete.");
   } catch (error) {
     setTailorFinderBusy(panel, false);
-    progress.textContent = "";
-    appendError(
+    showTailorSearchError(
+      progress,
       error instanceof Error
         ? error.message
         : "Nearby tailor search is unavailable right now."
     );
-    scrollConversationToBottom();
     setStatus("The nearby tailor search could not be completed.");
   }
+}
+
+function showTailorSearchError(progress, message) {
+  progress.dataset.state = "error";
+  progress.textContent = message;
 }
 
 function setTailorFinderBusy(panel, busy) {
@@ -466,6 +470,12 @@ function buildTailorResults(attachment) {
       list.append(buildTailorCard(tailor));
     }
     section.append(list);
+  } else {
+    const empty = document.createElement("p");
+    empty.className = "empty-results";
+    empty.textContent =
+      "No listed tailor was found nearby. Try searching another location.";
+    section.append(empty);
   }
 
   const attribution = document.createElement("a");

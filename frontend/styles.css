@@ -300,11 +300,6 @@ h1 {
   max-width: min(1040px, 96%);
 }
 
-.message.has-tailor-results {
-  width: min(860px, 94%);
-  max-width: min(860px, 94%);
-}
-
 .message-results {
   margin-top: 18px;
   padding-top: 18px;
@@ -563,6 +558,10 @@ h1 {
   min-height: 1.3em;
   color: var(--plum);
   font-weight: 750;
+}
+
+.tailor-search-progress[data-state="error"] {
+  color: #8b2f25;
 }
 
 .tailor-results {
@@ -1035,11 +1034,6 @@ footer {
   }
 
   .message.has-product-results {
-    width: 96%;
-    max-width: 96%;
-  }
-
-  .message.has-tailor-results {
     width: 96%;
     max-width: 96%;
   }
