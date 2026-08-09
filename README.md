@@ -147,9 +147,11 @@ The implemented Worker exposes `POST /api/chat`. It checks the browser origin, r
 Cloudflare's Git integration can build and deploy this repository after a push; Wrangler does not have to be installed on the developer's computer. Before deploying:
 
 1. Check that `name` in `wrangler.jsonc` exactly matches the Worker name in the Cloudflare dashboard.
-2. Add `OPENAI_API_KEY` as an encrypted Worker secret in **Settings → Variables and Secrets**.
-3. Add `ALLOWED_ORIGIN` as a Worker variable containing the frontend's exact origin, such as `https://skin-ai.example`. Multiple exact origins can be comma-separated.
-4. Keep `OPENAI_MODEL` as the configured variable or override it in the dashboard.
+2. Add `OPENAI_API_KEY`, `YOUCAM_API_KEY`, and `TURNSTILE_SECRET` as encrypted Worker secrets in **Settings → Variables and Secrets**.
+3. Add `ALLOWED_ORIGIN` as a Worker variable containing the frontend's exact origin, such as `https://skin-ai.pages.dev`. Multiple exact origins can be comma-separated.
+4. Keep `OPENAI_MODEL` and `TURNSTILE_HOSTNAMES` as configured variables or override them in the dashboard. Production Turnstile hostnames must not include localhost.
+5. Keep the `CHAT_RATE_LIMITER` binding in `wrangler.jsonc`; it permits ten chat requests per visitor address in 60 seconds before the Worker calls OpenAI.
+6. Keep the separate `TRY_ON_RATE_LIMITER` binding; it permits two verified task-creation attempts per visitor address in 60 seconds.
 
 For optional local Worker testing, copy `.dev.vars.example` to `.dev.vars` and replace its values. `.dev.vars` is ignored by Git and must never be committed.
 
@@ -336,17 +338,18 @@ The browser never receives the `YOUCAM_API_KEY`. All authenticated YouCam reques
 5. Worker uses its private API key to request a YouCam signed upload URL and `file_id`.
 6. Worker returns only the safe upload details to the frontend.
 7. Frontend uploads the photograph bytes directly to the signed YouCam URL.
-8. After upload succeeds, frontend sends the `file_id` and selected product ID to the Worker.
-9. Worker reloads the product from the trusted catalogue and obtains its garment image URL and category.
-10. Worker creates one YouCam task containing both image references:
+8. After upload succeeds, the frontend obtains a single-use Turnstile token and sends it with the `file_id` and selected product ID to the Worker.
+9. Worker validates the token's hostname and action, then applies the generation-only rate limit.
+10. Worker reloads the product from the trusted catalogue and obtains its garment image URL and category.
+11. Worker creates one YouCam task containing both image references:
       - `src_file_id`: the uploaded user photograph
       - `ref_file_url`: the selected garment's public image URL
       - `garment_category`: the trusted catalogue value, such as `full_body`
-11. YouCam returns a `task_id`, which identifies this exact processing job.
-12. Frontend periodically sends that `task_id` to the Worker to ask for progress.
-13. Worker checks the matching task with YouCam until it reports success or error.
-14. On success, Worker returns the generated result URL to the frontend.
-15. Frontend displays the generated image as a visual preview with a fit disclaimer.
+12. YouCam returns a `task_id`, which identifies this exact processing job.
+13. Frontend periodically sends that `task_id` to the Worker to ask for progress.
+14. Worker checks the matching task with YouCam until it reports success or error.
+15. On success, Worker returns the generated result URL to the frontend.
+16. Frontend displays the generated image as a visual preview with a fit disclaimer.
 ```
 
 The task-creation request is where YouCam learns which two images belong together. Conceptually, the Worker sends:
@@ -386,6 +389,8 @@ The actual photograph upload goes directly from the browser to the temporary sig
 ## Security and privacy rules
 
 - Store `YOUCAM_API_KEY` as an encrypted Cloudflare secret.
+- Store `TURNSTILE_SECRET` as an encrypted Cloudflare secret; the Turnstile site key is intentionally public.
+- Require a valid single-use Turnstile token and apply rate limiting before creating a paid YouCam task.
 - Never expose API keys to frontend code or commit them to Git.
 - Require explicit consent before sending a user's photograph to YouCam.
 - Validate file format and size before processing.

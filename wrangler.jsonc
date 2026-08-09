@@ -5,6 +5,25 @@
   "compatibility_date": "2026-08-06",
   "keep_vars": true,
   "vars": {
-    "OPENAI_MODEL": "gpt-5.6-sol"
-  }
+    "OPENAI_MODEL": "gpt-5.6-sol",
+    "TURNSTILE_HOSTNAMES": "skin-ai.pages.dev"
+  },
+  "ratelimits": [
+    {
+      "name": "CHAT_RATE_LIMITER",
+      "namespace_id": "2179702",
+      "simple": {
+        "limit": 10,
+        "period": 60
+      }
+    },
+    {
+      "name": "TRY_ON_RATE_LIMITER",
+      "namespace_id": "2179701",
+      "simple": {
+        "limit": 2,
+        "period": 60
+      }
+    }
+  ]
 }

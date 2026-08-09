@@ -12,6 +12,7 @@ function validRequest(overrides = {}) {
   return {
     selectedProductId: "mock-dress-001",
     fileId: "uploaded/user+photo/id",
+    turnstileToken: "verified-in-worker-before-orchestration",
     ...overrides
   };
 }

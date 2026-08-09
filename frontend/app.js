@@ -19,6 +19,8 @@ const TRY_ON_UPLOAD_API_URL =
   "https://skin-ai.lilahu21797.workers.dev/api/try-on/upload";
 const TRY_ON_TASKS_API_URL =
   "https://skin-ai.lilahu21797.workers.dev/api/try-on/tasks";
+const TURNSTILE_SITE_KEY = "0x4AAAAAAELDn3xUCDGkdmQm";
+const TURNSTILE_ACTION = "try_on_generate";
 
 const form = document.querySelector("#chat-form");
 const input = document.querySelector("#message-input");
@@ -34,6 +36,9 @@ let photoSelection = emptyPhotoSelection();
 let photoValidationGeneration = 0;
 let photoUploadController = null;
 let tryOnTaskController = null;
+let turnstileWidgetId = null;
+let turnstileToken = null;
+let turnstileRenderTimer = null;
 
 renderConversation();
 renderResults(session.displayResults);
@@ -148,6 +153,7 @@ function appendError(content) {
 }
 
 function renderResults(results) {
+  removeTurnstileWidget();
   resultsRegion.replaceChildren();
   if (!results) return;
 
@@ -550,6 +556,7 @@ function resetGenerationState() {
   photoSelection.generationStatus = "idle";
   photoSelection.generationError = null;
   photoSelection.resultUrl = null;
+  removeTurnstileWidget();
 }
 
 async function handlePhotoUpload() {
@@ -639,10 +646,34 @@ function buildGenerationPanel(selectedProduct) {
   explanation.textContent =
     "Generating pairs the uploaded photograph with this garment and starts one YouCam processing task.";
 
+  const requiresHumanVerification = !photoSelection.taskId;
+
+  if (requiresHumanVerification) {
+    const verificationLabel = document.createElement("p");
+    verificationLabel.className = "turnstile-label";
+    verificationLabel.textContent =
+      "Complete the security check before starting the generation.";
+
+    const turnstileContainer = document.createElement("div");
+    turnstileContainer.id = "try-on-turnstile";
+    turnstileContainer.className = "turnstile-container";
+
+    const turnstileStatus = document.createElement("p");
+    turnstileStatus.id = "turnstile-status";
+    turnstileStatus.className = "turnstile-status";
+    turnstileStatus.setAttribute("role", "status");
+    turnstileStatus.textContent = "Loading security check…";
+    panel.append(verificationLabel, turnstileContainer, turnstileStatus);
+    queueMicrotask(renderTurnstileWidget);
+  }
+
   const generateButton = document.createElement("button");
+  generateButton.id = "generate-try-on";
   generateButton.className = "generate-try-on-button";
   generateButton.type = "button";
-  generateButton.disabled = photoSelection.generationStatus === "processing";
+  generateButton.disabled =
+    photoSelection.generationStatus === "processing" ||
+    (requiresHumanVerification && !turnstileToken);
   generateButton.textContent =
     photoSelection.generationStatus === "processing"
       ? "Generating preview…"
@@ -680,12 +711,15 @@ function buildGenerationPanel(selectedProduct) {
 
 async function handleTryOnGeneration() {
   const selectedProductId = session.conversationState.selectedProductId;
+  const taskRequiresVerification = !photoSelection.taskId;
+  const tokenForRequest = turnstileToken;
   if (
     !selectedProductId ||
     !photoSelection.uploaded ||
     !photoSelection.fileId ||
     photoSelection.generationStatus === "processing" ||
-    photoSelection.resultUrl
+    photoSelection.resultUrl ||
+    (taskRequiresVerification && !tokenForRequest)
   ) {
     return;
   }
@@ -703,6 +737,7 @@ async function handleTryOnGeneration() {
         tasksApiUrl: TRY_ON_TASKS_API_URL,
         selectedProductId,
         fileId: photoSelection.fileId,
+        turnstileToken: tokenForRequest,
         signal: controller.signal
       });
 
@@ -746,6 +781,75 @@ async function handleTryOnGeneration() {
       )?.focus();
     }
   }
+}
+
+function renderTurnstileWidget() {
+  const container = document.querySelector("#try-on-turnstile");
+  if (!container || turnstileWidgetId !== null) return;
+
+  if (typeof globalThis.turnstile?.render !== "function") {
+    turnstileRenderTimer = setTimeout(renderTurnstileWidget, 150);
+    return;
+  }
+
+  try {
+    turnstileWidgetId = globalThis.turnstile.render(container, {
+      sitekey: TURNSTILE_SITE_KEY,
+      action: TURNSTILE_ACTION,
+      theme: "light",
+      size: "flexible",
+      callback(token) {
+        turnstileToken = token;
+        const button = document.querySelector("#generate-try-on");
+        if (button) button.disabled = false;
+        setTurnstileStatus("Security check complete.");
+      },
+      "expired-callback"() {
+        turnstileToken = null;
+        const button = document.querySelector("#generate-try-on");
+        if (button) button.disabled = true;
+        setTurnstileStatus("Security check expired. Complete it again.");
+      },
+      "error-callback"() {
+        turnstileToken = null;
+        const button = document.querySelector("#generate-try-on");
+        if (button) button.disabled = true;
+        setTurnstileStatus(
+          "The security check could not load. Check your connection and try again."
+        );
+      }
+    });
+  } catch {
+    setTurnstileStatus(
+      "The security check could not start. Refresh the page and try again."
+    );
+  }
+}
+
+function removeTurnstileWidget() {
+  if (turnstileRenderTimer !== null) {
+    clearTimeout(turnstileRenderTimer);
+    turnstileRenderTimer = null;
+  }
+
+  if (
+    turnstileWidgetId !== null &&
+    typeof globalThis.turnstile?.remove === "function"
+  ) {
+    try {
+      globalThis.turnstile.remove(turnstileWidgetId);
+    } catch {
+      // The containing UI may already have been replaced.
+    }
+  }
+
+  turnstileWidgetId = null;
+  turnstileToken = null;
+}
+
+function setTurnstileStatus(message) {
+  const status = document.querySelector("#turnstile-status");
+  if (status) status.textContent = message;
 }
 
 function formatFileSize(bytes) {

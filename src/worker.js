@@ -14,6 +14,10 @@ import {
 } from "./chat/validate-chat-contracts.js";
 import { ChatResponseValidationError } from "./chat/build-chat-response.js";
 import {
+  ChatProtectionError,
+  enforceChatRateLimit
+} from "./chat/protect-chat.js";
+import {
   TryOnUploadError,
   handleTryOnUpload
 } from "./try-on/handle-try-on-upload.js";
@@ -30,6 +34,11 @@ import {
   YouCamTaskProviderError,
   createYouCamTaskClient
 } from "./try-on/request-youcam-task.js";
+import {
+  TryOnProtectionError,
+  createTurnstileVerifier,
+  enforceTryOnRateLimit
+} from "./try-on/protect-try-on-task.js";
 
 export const CHAT_API_PATH = "/api/chat";
 export const TRY_ON_UPLOAD_API_PATH = "/api/try-on/upload";
@@ -143,6 +152,20 @@ export function createWorker({
         }
 
         if (route.kind === "try-on-task-create") {
+          const verifyTurnstile = createTurnstileVerifier({
+            secret: env.TURNSTILE_SECRET,
+            expectedHostnames: env.TURNSTILE_HOSTNAMES,
+            fetchImpl
+          });
+          await verifyTurnstile({
+            token: requestBody?.turnstileToken,
+            remoteIp: request.headers.get("CF-Connecting-IP") ?? ""
+          });
+          await enforceTryOnRateLimit({
+            limiter: env.TRY_ON_RATE_LIMITER,
+            key: `try-on:${request.headers.get("CF-Connecting-IP") ?? "unknown"}`
+          });
+
           const youCamTaskClient = createYouCamTaskClient({
             apiKey: env.YOUCAM_API_KEY,
             fetchImpl
@@ -167,6 +190,11 @@ export function createWorker({
           return jsonResponse(200, response, cors.headers);
         }
 
+        await enforceChatRateLimit({
+          limiter: env.CHAT_RATE_LIMITER,
+          key: `chat:${request.headers.get("CF-Connecting-IP") ?? "unknown"}`
+        });
+
         const interpretMessage = createOpenAiInterpreter({
           apiKey: env.OPENAI_API_KEY,
           model: env.OPENAI_MODEL || DEFAULT_OPENAI_MODEL,
@@ -185,7 +213,7 @@ export function createWorker({
         return jsonResponse(
           mapped.status,
           publicError(mapped.code, mapped.message),
-          cors.headers
+          { ...cors.headers, ...mapped.headers }
         );
       }
     }
@@ -283,6 +311,57 @@ function resolveApiRoute(pathname) {
 }
 
 function mapPublicError(error) {
+  if (
+    error instanceof ChatProtectionError &&
+    error.code === "CHAT_RATE_LIMITED"
+  ) {
+    return {
+      status: 429,
+      code: "CHAT_RATE_LIMITED",
+      message: "Ten chat messages are allowed per minute. Please wait and try again.",
+      headers: { "Retry-After": "60" }
+    };
+  }
+
+  if (error instanceof ChatProtectionError) {
+    return {
+      status: 503,
+      code: "CHAT_PROTECTION_UNAVAILABLE",
+      message: "Chat is temporarily unavailable. Please try again."
+    };
+  }
+
+  if (
+    error instanceof TryOnProtectionError &&
+    error.code === "TURNSTILE_REJECTED"
+  ) {
+    return {
+      status: 403,
+      code: "HUMAN_VERIFICATION_REQUIRED",
+      message: "Complete the security check again before generating the preview."
+    };
+  }
+
+  if (
+    error instanceof TryOnProtectionError &&
+    error.code === "TRY_ON_RATE_LIMITED"
+  ) {
+    return {
+      status: 429,
+      code: "TRY_ON_RATE_LIMITED",
+      message: "Two generation attempts are allowed per minute. Please wait and try again.",
+      headers: { "Retry-After": "60" }
+    };
+  }
+
+  if (error instanceof TryOnProtectionError) {
+    return {
+      status: 503,
+      code: "TRY_ON_PROTECTION_UNAVAILABLE",
+      message: "The virtual try-on security check is unavailable. Please try again."
+    };
+  }
+
   if (
     error instanceof TryOnTaskError &&
     ["INVALID_TRY_ON_TASK_REQUEST", "INVALID_TRY_ON_TASK_ID"].includes(

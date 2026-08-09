@@ -43,6 +43,7 @@ function validTryOnTaskRequest(overrides = {}) {
   return {
     selectedProductId: "mock-dress-001",
     fileId: "uploaded/user+photo/id",
+    turnstileToken: "valid-browser-token",
     ...overrides
   };
 }
@@ -94,6 +95,18 @@ function environment(overrides = {}) {
   return {
     OPENAI_API_KEY: "server-side-test-key",
     YOUCAM_API_KEY: "server-side-youcam-key",
+    TURNSTILE_SECRET: "server-side-turnstile-secret",
+    TURNSTILE_HOSTNAMES: "skin-ai.pages.dev",
+    CHAT_RATE_LIMITER: {
+      async limit() {
+        return { success: true };
+      }
+    },
+    TRY_ON_RATE_LIMITER: {
+      async limit() {
+        return { success: true };
+      }
+    },
     OPENAI_MODEL: "test-model",
     ALLOWED_ORIGIN: allowedOrigin,
     ...overrides
@@ -128,6 +141,7 @@ function completedYouCamFileResponse() {
 
 test("POST /api/chat returns the validated orchestration response", async () => {
   let providerCalls = 0;
+  let rateLimitCalls = 0;
   const worker = createWorker({
     logger: silentLogger,
     fetchImpl: async (_url, options) => {
@@ -143,7 +157,18 @@ test("POST /api/chat returns the validated orchestration response", async () => 
     }
   });
 
-  const response = await worker.fetch(request(), environment());
+  const response = await worker.fetch(
+    request(),
+    environment({
+      CHAT_RATE_LIMITER: {
+        async limit({ key }) {
+          rateLimitCalls += 1;
+          assert.equal(key, "chat:unknown");
+          return { success: true };
+        }
+      }
+    })
+  );
   const body = await response.json();
 
   assert.equal(response.status, 200);
@@ -153,6 +178,35 @@ test("POST /api/chat returns the validated orchestration response", async () => 
   assert.equal(body.searchPerformed, false);
   assert.equal(body.results, null);
   assert.equal(providerCalls, 1);
+  assert.equal(rateLimitCalls, 1);
+});
+
+test("POST /api/chat returns 429 before OpenAI when rate limited", async () => {
+  let providerCalls = 0;
+  const worker = createWorker({
+    logger: silentLogger,
+    fetchImpl: async () => {
+      providerCalls += 1;
+      throw new Error("OpenAI must not be called");
+    }
+  });
+
+  const response = await worker.fetch(
+    request(),
+    environment({
+      CHAT_RATE_LIMITER: {
+        async limit() {
+          return { success: false };
+        }
+      }
+    })
+  );
+  const body = await response.json();
+
+  assert.equal(response.status, 429);
+  assert.equal(response.headers.get("Retry-After"), "60");
+  assert.equal(body.error.code, "CHAT_RATE_LIMITED");
+  assert.equal(providerCalls, 0);
 });
 
 test("POST /api/try-on/upload returns safe temporary upload instructions", async () => {
@@ -251,9 +305,26 @@ test("try-on upload reports missing YouCam configuration safely", async () => {
 });
 
 test("POST /api/try-on/tasks creates a task with the trusted garment", async () => {
+  let rateLimitCalls = 0;
   const worker = createWorker({
     logger: silentLogger,
     fetchImpl: async (url, options) => {
+      if (url.includes("/turnstile/v0/siteverify")) {
+        assert.equal(
+          options.body.get("secret"),
+          "server-side-turnstile-secret"
+        );
+        assert.equal(options.body.get("response"), "valid-browser-token");
+        return new Response(
+          JSON.stringify({
+            success: true,
+            hostname: "skin-ai.pages.dev",
+            action: "try_on_generate"
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
       assert.match(url, /\/s2s\/v2\.0\/task\/cloth-v3$/);
       assert.equal(options.headers.Authorization, "Bearer server-side-youcam-key");
       assert.deepEqual(JSON.parse(options.body), {
@@ -274,7 +345,15 @@ test("POST /api/try-on/tasks creates a task with the trusted garment", async () 
 
   const response = await worker.fetch(
     request({ path: TRY_ON_TASKS_API_PATH, body: validTryOnTaskRequest() }),
-    environment()
+    environment({
+      TRY_ON_RATE_LIMITER: {
+        async limit({ key }) {
+          rateLimitCalls += 1;
+          assert.equal(key, "try-on:unknown");
+          return { success: true };
+        }
+      }
+    })
   );
 
   assert.equal(response.status, 200);
@@ -283,6 +362,7 @@ test("POST /api/try-on/tasks creates a task with the trusted garment", async () 
     taskId: "youcam_task-123",
     status: "processing"
   });
+  assert.equal(rateLimitCalls, 1);
 });
 
 test("GET /api/try-on/tasks/:taskId returns the generated result", async () => {
@@ -327,12 +407,22 @@ test("GET /api/try-on/tasks/:taskId returns the generated result", async () => {
 });
 
 test("try-on task creation rejects browser-supplied garment data before YouCam", async () => {
-  let providerCalls = 0;
+  let youCamCalls = 0;
   const worker = createWorker({
     logger: silentLogger,
-    fetchImpl: async () => {
-      providerCalls += 1;
-      throw new Error("must not be called");
+    fetchImpl: async (url) => {
+      if (url.includes("/turnstile/v0/siteverify")) {
+        return new Response(
+          JSON.stringify({
+            success: true,
+            hostname: "skin-ai.pages.dev",
+            action: "try_on_generate"
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      youCamCalls += 1;
+      throw new Error("YouCam must not be called");
     }
   });
   const response = await worker.fetch(
@@ -348,7 +438,77 @@ test("try-on task creation rejects browser-supplied garment data before YouCam",
 
   assert.equal(response.status, 400);
   assert.equal((await response.json()).error.code, "INVALID_TRY_ON_TASK_REQUEST");
-  assert.equal(providerCalls, 0);
+  assert.equal(youCamCalls, 0);
+});
+
+test("try-on task creation requires Turnstile before rate limiting or YouCam", async () => {
+  let rateLimitCalls = 0;
+  let youCamCalls = 0;
+  const worker = createWorker({
+    logger: silentLogger,
+    fetchImpl: async (url) => {
+      if (url.includes("/turnstile/v0/siteverify")) {
+        return new Response(
+          JSON.stringify({ success: false, "error-codes": ["invalid-input-response"] }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      youCamCalls += 1;
+      throw new Error("YouCam must not be called");
+    }
+  });
+  const response = await worker.fetch(
+    request({ path: TRY_ON_TASKS_API_PATH, body: validTryOnTaskRequest() }),
+    environment({
+      TRY_ON_RATE_LIMITER: {
+        async limit() {
+          rateLimitCalls += 1;
+          return { success: true };
+        }
+      }
+    })
+  );
+
+  assert.equal(response.status, 403);
+  assert.equal((await response.json()).error.code, "HUMAN_VERIFICATION_REQUIRED");
+  assert.equal(rateLimitCalls, 0);
+  assert.equal(youCamCalls, 0);
+});
+
+test("try-on task creation returns 429 before YouCam when rate limited", async () => {
+  let youCamCalls = 0;
+  const worker = createWorker({
+    logger: silentLogger,
+    fetchImpl: async (url) => {
+      if (url.includes("/turnstile/v0/siteverify")) {
+        return new Response(
+          JSON.stringify({
+            success: true,
+            hostname: "skin-ai.pages.dev",
+            action: "try_on_generate"
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      youCamCalls += 1;
+      throw new Error("YouCam must not be called");
+    }
+  });
+  const response = await worker.fetch(
+    request({ path: TRY_ON_TASKS_API_PATH, body: validTryOnTaskRequest() }),
+    environment({
+      TRY_ON_RATE_LIMITER: {
+        async limit() {
+          return { success: false };
+        }
+      }
+    })
+  );
+
+  assert.equal(response.status, 429);
+  assert.equal(response.headers.get("Retry-After"), "60");
+  assert.equal((await response.json()).error.code, "TRY_ON_RATE_LIMITED");
+  assert.equal(youCamCalls, 0);
 });
 
 test("rejects invalid chat data before calling OpenAI", async () => {

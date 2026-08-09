@@ -581,6 +581,23 @@ h1 {
   background: #b94d40;
 }
 
+.turnstile-label {
+  margin-top: 14px !important;
+  font-weight: 750;
+}
+
+.turnstile-container {
+  width: min(100%, 420px);
+  min-height: 65px;
+  margin-top: 10px;
+}
+
+.turnstile-status {
+  margin-top: 7px !important;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
 .generation-progress,
 .generation-error,
 .try-on-result-note {

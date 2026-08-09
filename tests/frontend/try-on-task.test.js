@@ -24,7 +24,8 @@ test("creates a task using only the selected product and uploaded file ID", asyn
     {
       tasksApiUrl,
       selectedProductId: "mock-dress-001",
-      fileId: "uploaded/file/id"
+      fileId: "uploaded/file/id",
+      turnstileToken: "browser-turnstile-token"
     },
     {
       fetchImpl: async (url, options) => {
@@ -43,7 +44,8 @@ test("creates a task using only the selected product and uploaded file ID", asyn
   assert.equal(capturedOptions.method, "POST");
   assert.deepEqual(JSON.parse(capturedOptions.body), {
     selectedProductId: "mock-dress-001",
-    fileId: "uploaded/file/id"
+    fileId: "uploaded/file/id",
+    turnstileToken: "browser-turnstile-token"
   });
   assert.equal(result.taskId, "task_abc-123");
 });

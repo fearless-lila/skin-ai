@@ -13,7 +13,7 @@ export class TryOnGenerationError extends Error {
 }
 
 export async function createTryOnTask(
-  { tasksApiUrl, selectedProductId, fileId, signal },
+  { tasksApiUrl, selectedProductId, fileId, turnstileToken, signal },
   { fetchImpl = globalThis.fetch } = {}
 ) {
   const body = await requestJson(
@@ -21,7 +21,7 @@ export async function createTryOnTask(
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ selectedProductId, fileId }),
+      body: JSON.stringify({ selectedProductId, fileId, turnstileToken }),
       signal
     },
     fetchImpl
