@@ -1,6 +1,7 @@
 import {
   YOUCAM_API_BASE_URL
 } from "./request-youcam-upload.js";
+import { isSupportedYouCamGarmentCategory } from "./virtual-try-on-config.js";
 
 export const YOUCAM_CLOTHES_TASK_PATH = "/s2s/v2.0/task/cloth-v3";
 
@@ -37,7 +38,7 @@ export function createYouCamTaskClient({
         typeof fileId !== "string" ||
         fileId.length === 0 ||
         !isHttpsUrl(referenceImageUrl) ||
-        garmentCategory !== "full_body"
+        !isSupportedYouCamGarmentCategory(garmentCategory)
       ) {
         throw new TypeError("Trusted YouCam task inputs are invalid.");
       }

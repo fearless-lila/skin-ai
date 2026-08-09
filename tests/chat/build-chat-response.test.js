@@ -83,7 +83,7 @@ test("joins matcher results with trusted product-card data", () => {
     ({ product }) => product.id === "mock-dress-003"
   );
   assert.ok(nora);
-  assert.equal(nora.product.virtualTryOnAvailable, false);
+  assert.equal(nora.product.virtualTryOnAvailable, true);
 });
 
 test("keeps previous requirements for a conversational follow-up", () => {

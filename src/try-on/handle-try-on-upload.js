@@ -7,6 +7,7 @@ import uploadRequestSchema from "../../schemas/try-on-upload-request.schema.json
 import uploadResponseSchema from "../../schemas/try-on-upload-response.schema.json" with {
   type: "json"
 };
+import { hasReadyTryOnConfiguration } from "./virtual-try-on-config.js";
 
 const ajv = new Ajv2020({ allErrors: true, strict: true });
 addFormats(ajv);
@@ -87,15 +88,4 @@ export async function handleTryOnUpload(
   }
 
   return response;
-}
-
-function hasReadyTryOnConfiguration(product) {
-  const configuration = product.virtualTryOn;
-  return Boolean(
-    configuration?.status === "ready" &&
-      configuration.provider === "youcam_clothes_v3" &&
-      configuration.garmentCategory === "full_body" &&
-      Number.isInteger(configuration.referenceImageIndex) &&
-      product.imageUrls?.[configuration.referenceImageIndex]
-  );
 }

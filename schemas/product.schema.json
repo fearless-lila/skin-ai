@@ -177,8 +177,13 @@
           "maximum": 11
         },
         "garmentCategory": {
-          "description": "The currently verified YouCam Clothes v3 category for the MVP dress reference.",
-          "const": "full_body"
+          "description": "The trusted YouCam Clothes v3 region for this garment reference.",
+          "type": "string",
+          "enum": [
+            "upper_body",
+            "lower_body",
+            "full_body"
+          ]
         }
       }
     },

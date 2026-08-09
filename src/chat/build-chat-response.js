@@ -4,6 +4,7 @@ import addFormats from "ajv-formats";
 import chatResponseSchema from "../../schemas/chat-response.schema.json" with {
   type: "json"
 };
+import { hasReadyTryOnConfiguration } from "../try-on/virtual-try-on-config.js";
 import userRequirementsSchema from "../../schemas/user-requirements.schema.json" with {
   type: "json"
 };
@@ -160,23 +161,8 @@ function buildProductCard(product) {
     price: product.price ?? null,
     availability: product.availability ?? "unknown",
     sizes: product.sizes,
-    virtualTryOnAvailable: isVirtualTryOnAvailable(product)
+    virtualTryOnAvailable: hasReadyTryOnConfiguration(product)
   };
-}
-
-function isVirtualTryOnAvailable(product) {
-  const configuration = product.virtualTryOn;
-
-  if (
-    configuration?.status !== "ready" ||
-    configuration.provider !== "youcam_clothes_v3" ||
-    configuration.garmentCategory !== "full_body" ||
-    !Number.isInteger(configuration.referenceImageIndex)
-  ) {
-    return false;
-  }
-
-  return Boolean(product.imageUrls?.[configuration.referenceImageIndex]);
 }
 
 function buildCompatibilitySummary(matchResult) {

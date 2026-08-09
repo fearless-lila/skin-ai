@@ -31,6 +31,13 @@ function validProviderUpload() {
   };
 }
 
+function catalogueWithUnavailableProduct(productId) {
+  const catalogue = structuredClone(mockCatalogue);
+  const product = catalogue.products.find(({ id }) => id === productId);
+  product.virtualTryOn = { status: "unavailable" };
+  return catalogue;
+}
+
 test("validates the product before requesting a temporary upload", async () => {
   let receivedFile;
   const result = await handleTryOnUpload(validUploadRequest(), {
@@ -90,7 +97,10 @@ test("rejects unknown and try-on-unavailable products before contacting YouCam",
     await assert.rejects(
       handleTryOnUpload(
         validUploadRequest({ selectedProductId: "mock-dress-002" }),
-        dependencies
+        {
+          ...dependencies,
+          catalogue: catalogueWithUnavailableProduct("mock-dress-002")
+        }
       ),
       (error) =>
         error instanceof TryOnUploadError &&

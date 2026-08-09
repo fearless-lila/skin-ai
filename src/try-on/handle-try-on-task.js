@@ -10,6 +10,7 @@ import taskCreateResponseSchema from "../../schemas/try-on-task-create-response.
 import taskStatusResponseSchema from "../../schemas/try-on-task-status-response.schema.json" with {
   type: "json"
 };
+import { hasReadyTryOnConfiguration } from "./virtual-try-on-config.js";
 
 const TASK_ID_PATTERN = /^[A-Za-z0-9_-]{1,1024}$/;
 const ajv = new Ajv2020({ allErrors: true, strict: true });
@@ -154,14 +155,7 @@ function findTryOnProduct(catalogue, productId) {
     });
   }
 
-  const configuration = product.virtualTryOn;
-  if (
-    configuration?.status !== "ready" ||
-    configuration.provider !== "youcam_clothes_v3" ||
-    configuration.garmentCategory !== "full_body" ||
-    !Number.isInteger(configuration.referenceImageIndex) ||
-    !isHttpsUrl(product.imageUrls?.[configuration.referenceImageIndex])
-  ) {
+  if (!hasReadyTryOnConfiguration(product)) {
     throw new TryOnTaskError({
       code: "VIRTUAL_TRY_ON_UNAVAILABLE",
       message: "The selected product is not available for virtual try-on."
@@ -201,12 +195,4 @@ function buildStatusResponse(taskId, providerTask) {
     resultUrl: null,
     error: null
   };
-}
-
-function isHttpsUrl(value) {
-  try {
-    return new URL(value).protocol === "https:";
-  } catch {
-    return false;
-  }
 }

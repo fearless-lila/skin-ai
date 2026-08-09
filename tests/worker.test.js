@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import mockCatalogue from "../data/mock-catalogue.json" with { type: "json" };
+
 import {
   CHAT_API_PATH,
   MAX_CHAT_REQUEST_BYTES,
@@ -46,6 +48,13 @@ function validTryOnTaskRequest(overrides = {}) {
     turnstileToken: "valid-browser-token",
     ...overrides
   };
+}
+
+function catalogueWithUnavailableProduct(productId) {
+  const catalogue = structuredClone(mockCatalogue);
+  const product = catalogue.products.find(({ id }) => id === productId);
+  product.virtualTryOn = { status: "unavailable" };
+  return catalogue;
 }
 
 function request({
@@ -253,6 +262,7 @@ test("POST /api/try-on/upload returns safe temporary upload instructions", async
 test("try-on upload rejects invalid input and unavailable products before YouCam", async (t) => {
   let providerCalls = 0;
   const worker = createWorker({
+    catalogue: catalogueWithUnavailableProduct("mock-dress-002"),
     logger: silentLogger,
     fetchImpl: async () => {
       providerCalls += 1;

@@ -17,27 +17,39 @@ function validRequest(overrides = {}) {
   };
 }
 
-test("creates a task with the trusted catalogue garment configuration", async () => {
-  let received;
-  const result = await handleTryOnTaskCreate(validRequest(), {
-    catalogue: mockCatalogue,
-    createProviderTask: async (task) => {
-      received = task;
-      return { taskId: "youcam_task-123" };
-    }
-  });
+function catalogueWithUnavailableProduct(productId) {
+  const catalogue = structuredClone(mockCatalogue);
+  const product = catalogue.products.find(({ id }) => id === productId);
+  product.virtualTryOn = { status: "unavailable" };
+  return catalogue;
+}
 
-  assert.deepEqual(received, {
-    fileId: "uploaded/user+photo/id",
-    referenceImageUrl:
-      "https://skin-ai.pages.dev/images/avery-front-zip-dress.png",
-    garmentCategory: "full_body"
-  });
-  assert.deepEqual(result, {
-    selectedProductId: "mock-dress-001",
-    taskId: "youcam_task-123",
-    status: "processing"
-  });
+test("creates tasks for all eight trusted catalogue configurations", async () => {
+  for (const product of mockCatalogue.products) {
+    let received;
+    const result = await handleTryOnTaskCreate(
+      validRequest({ selectedProductId: product.id }),
+      {
+        catalogue: mockCatalogue,
+        createProviderTask: async (task) => {
+          received = task;
+          return { taskId: "youcam_task-123" };
+        }
+      }
+    );
+
+    assert.deepEqual(received, {
+      fileId: "uploaded/user+photo/id",
+      referenceImageUrl:
+        product.imageUrls[product.virtualTryOn.referenceImageIndex],
+      garmentCategory: product.virtualTryOn.garmentCategory
+    });
+    assert.deepEqual(result, {
+      selectedProductId: product.id,
+      taskId: "youcam_task-123",
+      status: "processing"
+    });
+  }
 });
 
 test("rejects untrusted task fields and unavailable products before YouCam", async (t) => {
@@ -68,7 +80,10 @@ test("rejects untrusted task fields and unavailable products before YouCam", asy
     await assert.rejects(
       handleTryOnTaskCreate(
         validRequest({ selectedProductId: "mock-dress-002" }),
-        dependencies
+        {
+          ...dependencies,
+          catalogue: catalogueWithUnavailableProduct("mock-dress-002")
+        }
       ),
       (error) =>
         error instanceof TryOnTaskError &&

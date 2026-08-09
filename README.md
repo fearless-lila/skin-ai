@@ -185,6 +185,8 @@ The catalogue is the source of product truth. It contains fields such as:
 
 The MVP will start with a small, clearly labelled mock catalogue. Products must never be invented by the LLM or presented as real retailer listings.
 
+The current demo catalogue contains eight fictional products. Every product has a deployed display image and a trusted YouCam reference configured for `upper_body`, `lower_body`, or `full_body`. A product may use a second image only for virtual try-on when its most informative display view does not meet YouCam's front-facing reference requirements.
+
 ### Later: retailer catalogue enrichment
 
 After the local matching flow works, an authorised retailer API can supply basic product data such as product ID, name, price, image URL, product URL, sizes, variants, and availability. The backend will normalise that data into the application's internal catalogue format and add accessibility attributes through a separate enrichment step.
@@ -344,7 +346,7 @@ The browser never receives the `YOUCAM_API_KEY`. All authenticated YouCam reques
 11. Worker creates one YouCam task containing both image references:
       - `src_file_id`: the uploaded user photograph
       - `ref_file_url`: the selected garment's public image URL
-      - `garment_category`: the trusted catalogue value, such as `full_body`
+      - `garment_category`: the trusted catalogue region: `upper_body`, `lower_body`, or `full_body`
 12. YouCam returns a `task_id`, which identifies this exact processing job.
 13. Frontend periodically sends that `task_id` to the Worker to ask for progress.
 14. Worker checks the matching task with YouCam until it reports success or error.

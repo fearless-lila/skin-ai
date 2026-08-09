@@ -52,6 +52,42 @@ test("creates a clothes task using trusted user and garment references", async (
   assert.deepEqual(result, { taskId: "youcam_task-123" });
 });
 
+test("accepts each trusted clothing region and rejects other values", async () => {
+  const receivedCategories = [];
+  const client = createYouCamTaskClient({
+    apiKey: "private-youcam-key",
+    fetchImpl: async (_url, options) => {
+      receivedCategories.push(JSON.parse(options.body).garment_category);
+      return jsonResponse({
+        status: 200,
+        data: { task_id: "youcam_task-123" }
+      });
+    }
+  });
+
+  for (const garmentCategory of ["upper_body", "lower_body", "full_body"]) {
+    await client.createTask({
+      fileId: "uploaded/user-photo/id",
+      referenceImageUrl: "https://skin-ai.pages.dev/images/reference.png",
+      garmentCategory
+    });
+  }
+
+  assert.deepEqual(receivedCategories, [
+    "upper_body",
+    "lower_body",
+    "full_body"
+  ]);
+  await assert.rejects(
+    client.createTask({
+      fileId: "uploaded/user-photo/id",
+      referenceImageUrl: "https://skin-ai.pages.dev/images/reference.png",
+      garmentCategory: "auto"
+    }),
+    TypeError
+  );
+});
+
 test("normalizes running, successful and failed task status", async (t) => {
   const cases = [
     {

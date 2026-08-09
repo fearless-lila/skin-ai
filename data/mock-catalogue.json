@@ -91,10 +91,14 @@
       },
       "productUrl": "https://demo.skin-ai.example/products/mock-dress-002",
       "imageUrls": [
-        "https://demo.skin-ai.example/images/mock-dress-002.jpg"
+        "https://skin-ai.pages.dev/images/rowan-back-zip-occasion-dress.png",
+        "https://skin-ai.pages.dev/images/rowan-back-zip-occasion-dress-vto-front.png"
       ],
       "virtualTryOn": {
-        "status": "unavailable"
+        "status": "ready",
+        "provider": "youcam_clothes_v3",
+        "referenceImageIndex": 1,
+        "garmentCategory": "full_body"
       },
       "garmentType": "dress",
       "description": "Fictional test product with a partial back zip.",
@@ -160,10 +164,13 @@
       },
       "productUrl": "https://demo.skin-ai.example/products/mock-shirt-001",
       "imageUrls": [
-        "https://demo.skin-ai.example/images/mock-shirt-001.jpg"
+        "https://skin-ai.pages.dev/images/maya-button-front-shirt.png"
       ],
       "virtualTryOn": {
-        "status": "unavailable"
+        "status": "ready",
+        "provider": "youcam_clothes_v3",
+        "referenceImageIndex": 0,
+        "garmentCategory": "upper_body"
       },
       "garmentType": "shirt",
       "description": "Fictional test product with conventional front buttons.",
@@ -238,10 +245,13 @@
       },
       "productUrl": "https://demo.skin-ai.example/products/mock-dress-003",
       "imageUrls": [
-        "https://demo.skin-ai.example/images/mock-dress-003.jpg"
+        "https://skin-ai.pages.dev/images/nora-wrap-dress.png"
       ],
       "virtualTryOn": {
-        "status": "unavailable"
+        "status": "ready",
+        "provider": "youcam_clothes_v3",
+        "referenceImageIndex": 0,
+        "garmentCategory": "full_body"
       },
       "garmentType": "dress",
       "description": "Fictional test product with a manually verified wrap construction.",
@@ -303,10 +313,14 @@
       },
       "productUrl": "https://demo.skin-ai.example/products/mock-trousers-001",
       "imageUrls": [
-        "https://demo.skin-ai.example/images/mock-trousers-001.jpg"
+        "https://skin-ai.pages.dev/images/ellis-pull-on-trousers.png",
+        "https://skin-ai.pages.dev/images/ellis-pull-on-trousers-vto-worn.png"
       ],
       "virtualTryOn": {
-        "status": "unavailable"
+        "status": "ready",
+        "provider": "youcam_clothes_v3",
+        "referenceImageIndex": 1,
+        "garmentCategory": "lower_body"
       },
       "garmentType": "trousers",
       "description": "Fictional pull-on test product with no fastening.",
@@ -377,10 +391,13 @@
       },
       "productUrl": "https://demo.skin-ai.example/products/mock-cardigan-001",
       "imageUrls": [
-        "https://demo.skin-ai.example/images/mock-cardigan-001.jpg"
+        "https://skin-ai.pages.dev/images/casey-magnetic-front-cardigan.png"
       ],
       "virtualTryOn": {
-        "status": "unavailable"
+        "status": "ready",
+        "provider": "youcam_clothes_v3",
+        "referenceImageIndex": 0,
+        "garmentCategory": "upper_body"
       },
       "garmentType": "cardigan",
       "description": "Fictional test product with concealed magnetic front closures.",
@@ -446,10 +463,13 @@
       },
       "productUrl": "https://demo.skin-ai.example/products/mock-blouse-001",
       "imageUrls": [
-        "https://demo.skin-ai.example/images/mock-blouse-001.jpg"
+        "https://skin-ai.pages.dev/images/samira-detail-unconfirmed-blouse.png"
       ],
       "virtualTryOn": {
-        "status": "unavailable"
+        "status": "ready",
+        "provider": "youcam_clothes_v3",
+        "referenceImageIndex": 0,
+        "garmentCategory": "upper_body"
       },
       "garmentType": "blouse",
       "description": "Fictional test product whose retailer description omits all fastening and dressing details.",
@@ -496,10 +516,14 @@
       },
       "productUrl": "https://demo.skin-ai.example/products/mock-jumpsuit-001",
       "imageUrls": [
-        "https://demo.skin-ai.example/images/mock-jumpsuit-001.jpg"
+        "https://skin-ai.pages.dev/images/taylor-side-zip-jumpsuit.png",
+        "https://skin-ai.pages.dev/images/taylor-side-zip-jumpsuit-vto-front.png"
       ],
       "virtualTryOn": {
-        "status": "unavailable"
+        "status": "ready",
+        "provider": "youcam_clothes_v3",
+        "referenceImageIndex": 1,
+        "garmentCategory": "full_body"
       },
       "garmentType": "jumpsuit",
       "description": "Fictional test product with a partial side zip and extended pull tab.",
