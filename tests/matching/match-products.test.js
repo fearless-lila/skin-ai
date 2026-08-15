@@ -216,6 +216,9 @@ test("confirms a compatible documented measurement and reports its size", () => 
 });
 
 test("reports missing information when unmeasured sizes could still match", () => {
+  const product = structuredClone(findProduct("mock-dress-001"));
+  product.measurements = product.measurements.filter(({ size }) => size === "M");
+
   const result = matchProduct(
     requirements({
       garmentTypes: ["dress"],
@@ -226,7 +229,7 @@ test("reports missing information when unmeasured sizes could still match", () =
         }
       ]
     }),
-    findProduct("mock-dress-001")
+    product
   );
 
   assert.equal(result.status, MATCH_STATUS.MISSING_INFORMATION);

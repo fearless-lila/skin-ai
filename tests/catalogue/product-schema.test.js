@@ -5,6 +5,8 @@ import test from "node:test";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 
+import { MOCK_PRODUCT_MEASUREMENTS } from "../../frontend/mock-product-measurements.js";
+
 const productSchema = JSON.parse(
   readFileSync(
     new URL("../../schemas/product.schema.json", import.meta.url),
@@ -61,6 +63,37 @@ test("every mock product image is a deployed frontend asset", () => {
   }
 });
 
+test("the deployed measurement illustration is the exact supplied asset", () => {
+  const suppliedAsset = readFileSync(
+    new URL("../../public/measurement.png", import.meta.url)
+  );
+  const deployedAsset = readFileSync(
+    new URL("../../frontend/images/measurement.png", import.meta.url)
+  );
+
+  assert.deepEqual(deployedAsset, suppliedAsset);
+});
+
+test("the alteration support cards use the exact supplied image assets", () => {
+  const assetNames = [
+    "accessible_sewing_studio_consultation.png",
+    "collaborative_sewing_studio_fitting.png",
+    "welcoming_inclusive_sewing_boutique.png",
+    "accessible_sewing_consultation_at_home.png"
+  ];
+
+  for (const assetName of assetNames) {
+    const suppliedAsset = readFileSync(
+      new URL(`../../public/${assetName}`, import.meta.url)
+    );
+    const deployedAsset = readFileSync(
+      new URL(`../../frontend/images/${assetName}`, import.meta.url)
+    );
+
+    assert.deepEqual(deployedAsset, suppliedAsset, assetName);
+  }
+});
+
 test("every mock product has a trusted reference for its YouCam region", () => {
   assert.equal(catalogue.products.length, 8);
 
@@ -74,6 +107,38 @@ test("every mock product has a trusted reference for its YouCam region", () => {
     assert.ok(
       product.imageUrls[product.virtualTryOn.referenceImageIndex],
       `${product.id}: missing trusted reference image`
+    );
+  }
+});
+
+test("every available mock size has documented garment measurements", () => {
+  for (const product of catalogue.products) {
+    const measuredSizes = new Set(
+      product.measurements.map((measurement) => measurement.size)
+    );
+    const measurementKeys = product.measurements.map(
+      ({ size, name }) => `${size}:${name}`
+    );
+
+    assert.deepEqual([...measuredSizes], product.sizes, product.id);
+    assert.equal(
+      new Set(measurementKeys).size,
+      measurementKeys.length,
+      `${product.id}: duplicate size measurement`
+    );
+  }
+});
+
+test("bundled mock measurement fallback matches the trusted catalogue", () => {
+  for (const product of catalogue.products) {
+    assert.deepEqual(
+      MOCK_PRODUCT_MEASUREMENTS[product.id],
+      product.measurements.map(({ size, name, valueCm }) => ({
+        size,
+        name,
+        valueCm
+      })),
+      product.id
     );
   }
 });

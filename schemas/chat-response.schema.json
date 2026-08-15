@@ -238,6 +238,7 @@
         "price",
         "availability",
         "sizes",
+        "measurements",
         "virtualTryOnAvailable"
       ],
       "properties": {
@@ -303,6 +304,46 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 60
+          }
+        },
+        "measurements": {
+          "description": "Validated garment measurements safe to compare in the browser. These are garment dimensions, not user measurements.",
+          "type": "array",
+          "maxItems": 500,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "size",
+              "name",
+              "valueCm"
+            ],
+            "properties": {
+              "size": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 60
+              },
+              "name": {
+                "type": "string",
+                "enum": [
+                  "chest",
+                  "waist",
+                  "hip",
+                  "shoulder_width",
+                  "sleeve_length",
+                  "garment_length",
+                  "inside_leg",
+                  "front_rise",
+                  "back_rise"
+                ]
+              },
+              "valueCm": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 400
+              }
+            }
           }
         },
         "virtualTryOnAvailable": {

@@ -1,3 +1,5 @@
+import { isUsableMeasurementProfile } from "./measurement-profile.js";
+
 export const MAX_RECENT_MESSAGES = 12;
 export const SESSION_STORAGE_KEY = "skin-ai.chat-session.v1";
 
@@ -10,6 +12,7 @@ export function createEmptyChatSession() {
       lastDisplayedProductIds: [],
       selectedProductId: null
     },
+    measurementProfile: null,
     displayResults: null
   };
 }
@@ -111,6 +114,7 @@ export function applyChatResponse(session, currentMessage, response) {
       lastDisplayedProductIds: searchResultIds,
       selectedProductId
     },
+    measurementProfile: session.measurementProfile ?? null,
     displayResults: response.searchPerformed ? response.results : session.displayResults
   };
 }
@@ -124,7 +128,9 @@ export function loadChatSession(storage = globalThis.sessionStorage) {
 
     const session = JSON.parse(saved);
     return isUsableSession(session)
-      ? migrateLegacyProductResults(removeLegacyTailorResults(session))
+      ? migrateLegacyProductResults(
+          removeLegacyTailorResults(migrateMeasurementProfile(session))
+        )
       : createEmptyChatSession();
   } catch {
     return createEmptyChatSession();
@@ -138,6 +144,24 @@ export function saveChatSession(session, storage = globalThis.sessionStorage) {
 export function clearChatSession(storage = globalThis.sessionStorage) {
   storage?.removeItem(SESSION_STORAGE_KEY);
   return createEmptyChatSession();
+}
+
+export function setMeasurementProfile(session, profile) {
+  if (!isUsableMeasurementProfile(profile)) {
+    throw new TypeError("A valid measurement profile is required.");
+  }
+
+  return {
+    ...session,
+    measurementProfile: structuredClone(profile)
+  };
+}
+
+export function resetMeasurementProfile(session) {
+  return {
+    ...session,
+    measurementProfile: null
+  };
 }
 
 export function selectProductForTryOn(session, product) {
@@ -222,8 +246,20 @@ function isUsableSession(session) {
       session.recentMessages.every(isUsableMessage) &&
       session.conversationState &&
       typeof session.conversationState === "object" &&
-      Array.isArray(session.conversationState.lastDisplayedProductIds)
+      Array.isArray(session.conversationState.lastDisplayedProductIds) &&
+      (session.measurementProfile === undefined ||
+        session.measurementProfile === null ||
+        isUsableMeasurementProfile(session.measurementProfile))
   );
+}
+
+function migrateMeasurementProfile(session) {
+  if (session.measurementProfile !== undefined) return session;
+
+  return {
+    ...session,
+    measurementProfile: null
+  };
 }
 
 function isUsableMessage(message) {

@@ -138,7 +138,7 @@ The backend will initially run as a Cloudflare Worker, so the website and privat
 
 The repository includes a small accessible browser interface for the chat flow. Run `npm run dev`, then open `http://localhost:3000`. This origin matches the development `ALLOWED_ORIGIN` configured for the Worker.
 
-The frontend stores the bounded conversation context in the browser's `sessionStorage`. It restores that context after a refresh and removes it when the user selects **Start over**. Only the fields permitted by `chat-request.schema.json` are sent to the backend; locally cached product display data is never treated as trusted catalogue input.
+The frontend stores the bounded conversation context in the browser's `sessionStorage`. It restores that context after a refresh and removes it when the user selects **Start over**. A user can also save optional body measurements once per conversation, compare them with documented garment measurements from any product tile, and reset them independently. Saved body measurements remain local to the browser: they are not included in chat requests, LLM context, or YouCam requests. Only the fields permitted by `chat-request.schema.json` are sent to the backend; locally cached product display data is never treated as trusted catalogue input.
 
 ### Nearby tailor finder
 
@@ -193,7 +193,7 @@ The catalogue is the source of product truth. It contains fields such as:
 
 The MVP will start with a small, clearly labelled mock catalogue. Products must never be invented by the LLM or presented as real retailer listings.
 
-The current demo catalogue contains eight fictional products. Every product has a deployed display image and a trusted YouCam reference configured for `upper_body`, `lower_body`, or `full_body`. A product may use a second image only for virtual try-on when its most informative display view does not meet YouCam's front-facing reference requirements.
+The current demo catalogue contains eight fictional products. Every product has a deployed display image, per-size mock garment measurements, and a trusted YouCam reference configured for `upper_body`, `lower_body`, or `full_body`. A product may use a second image only for virtual try-on when its most informative display view does not meet YouCam's front-facing reference requirements. The browser compares body and garment measurements deterministically and frames any calculated change as an alteration question, not a fit guarantee; it does not assume undocumented stretch or seam allowance.
 
 ### Later: retailer catalogue enrichment
 

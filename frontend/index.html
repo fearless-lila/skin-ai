@@ -75,6 +75,7 @@
               </li>
             </ul>
           </div>
+
         </section>
 
         <section class="chat-panel" aria-label="Clothing assistant conversation">
@@ -118,30 +119,93 @@
           class="alteration-section"
           aria-labelledby="alteration-section-heading"
         >
-          <div class="alteration-section-header">
-            <p class="eyebrow">Accessible alteration support</p>
-            <h2 id="alteration-section-heading">
-              Find a nearby alteration service
-            </h2>
-            <p class="alteration-description">
-              Clothing changes can make dressing easier. Search for nearby
-              tailors and alteration services using your current location, town,
-              city or postcode. We only show accessibility information when it
-              is listed.
-            </p>
-            <img
-              class="alteration-illustration"
-              src="/images/alteration-support-hero.png"
-              alt="Tailor assisting a wheelchair user with clothing alterations"
-              loading="lazy"
-            />
+          <div class="alteration-main">
+            <div class="alteration-section-header">
+              <p class="eyebrow">Accessible alteration support</p>
+              <h2 id="alteration-section-heading">
+                Find a nearby alteration service
+              </h2>
+              <p class="alteration-description">
+                Plan changes before a fitting, avoid wasted trips and make
+                clothing easier to manage.
+              </p>
+            </div>
+
+            <div
+              class="alteration-controls"
+              id="tailor-finder-container"
+              aria-label="Find nearby alteration services"
+            ></div>
           </div>
 
           <div
-            class="alteration-controls"
-            id="tailor-finder-container"
-            aria-label="Find nearby alteration services"
+            class="alteration-results-container"
+            id="tailor-results-container"
+            aria-live="polite"
           ></div>
+
+          <nav
+            class="alteration-support-grid"
+            aria-label="Ways alteration support can reduce effort"
+          >
+            <a class="alteration-support-card" href="#tailor-finder-container">
+              <img
+                src="/images/accessible_sewing_studio_consultation.png"
+                alt="A tailor discussing a front-zip garment with a wheelchair user"
+                loading="lazy"
+              />
+              <span class="alteration-card-body">
+                <strong>Local tailors who understand your needs</strong>
+                <span>Share what makes dressing easier before you travel.</span>
+              </span>
+            </a>
+
+            <a class="alteration-support-card" href="#tailor-finder-container">
+              <img
+                src="/images/welcoming_inclusive_sewing_boutique.png"
+                alt="Hands demonstrating an accessible zip and snap fastening"
+                loading="lazy"
+              />
+              <span class="alteration-card-body">
+                <strong>Simple changes, easier dressing</strong>
+                <span>Explore fastenings and fit changes that reduce effort.</span>
+              </span>
+            </a>
+
+            <a class="alteration-support-card" href="#tailor-finder-container">
+              <img
+                src="/images/collaborative_sewing_studio_fitting.png"
+                alt="A wheelchair user approaching a sewing studio by a step-free ramp"
+                loading="lazy"
+              />
+              <span class="alteration-card-body">
+                <strong>Step-free, accessible support</strong>
+                <span>Check access details before making a tiring trip.</span>
+              </span>
+            </a>
+
+            <a class="alteration-support-card" href="#tailor-finder-container">
+              <img
+                src="/images/accessible_sewing_consultation_at_home.png"
+                alt="A wheelchair user having a remote garment consultation with a tailor"
+                loading="lazy"
+              />
+              <span class="alteration-card-body">
+                <strong>Home visits or remote support</strong>
+                <span>Ask what can be handled from home when travel costs energy.</span>
+              </span>
+            </a>
+          </nav>
+
+          <div class="alteration-reassurance">
+            <span class="alteration-reassurance-icon" aria-hidden="true"
+              >&#9829;</span
+            >
+            <span>
+              <strong>Your comfort and independence matter.</strong>
+              Choose support that works around your access needs.
+            </span>
+          </div>
         </section>
       </main>
 

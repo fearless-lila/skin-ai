@@ -5,9 +5,18 @@ import {
   buildChatRequest,
   clearChatSession,
   loadChatSession,
+  resetMeasurementProfile,
   saveChatSession,
-  selectProductForTryOn
+  selectProductForTryOn,
+  setMeasurementProfile
 } from "./chat-state.js";
+import {
+  MEASUREMENT_FIELDS,
+  compareProductMeasurements,
+  normalizeMeasurementProfile
+} from "./measurement-profile.js";
+import { findRecommendedSizeIndex } from "./measurement-tabs.js";
+import { MOCK_PRODUCT_MEASUREMENTS } from "./mock-product-measurements.js";
 import { validateTryOnPhoto } from "./photo-selection.js";
 import { uploadTryOnPhoto } from "./try-on-upload.js";
 import {
@@ -33,6 +42,9 @@ const clearButton = document.querySelector("#clear-chat");
 const messageList = document.querySelector("#message-list");
 const tailorFinderContainer = document.querySelector(
   "#tailor-finder-container"
+);
+const tailorResultsContainer = document.querySelector(
+  "#tailor-results-container"
 );
 const statusRegion = document.querySelector("#request-status");
 const welcomeTemplate = document.querySelector("#welcome-template");
@@ -248,7 +260,11 @@ function buildProductResults(results, { current }) {
     header.append(notice);
   }
 
-  container.append(header, buildMatchFeatures());
+  if (current && session.measurementProfile) {
+    header.append(buildMeasurementProfileSummary());
+  }
+
+  container.append(header);
   appendProductGroup(
     container,
     "Documented matches",
@@ -283,49 +299,17 @@ function buildProductResults(results, { current }) {
   return container;
 }
 
-function buildMatchFeatures() {
-  const list = document.createElement("div");
-  list.className = "match-features";
-  list.setAttribute(
-    "aria-label",
-    "Accessibility features considered in clothing matches"
-  );
-
-  const features = [
-    ["↔", "Easy openings", "Front, wrap and pull-on"],
-    ["♡", "Accessible fastenings", "Options needing less hand effort"],
-    ["☁", "Comfort and movement", "Sensory and mobility needs"],
-    ["○", "Size evidence", "Measurements where listed"]
-  ];
-
-  for (const [icon, title, description] of features) {
-    const item = document.createElement("div");
-    item.className = "match-feature";
-
-    const iconElement = document.createElement("span");
-    iconElement.className = "match-feature-icon";
-    iconElement.setAttribute("aria-hidden", "true");
-    iconElement.textContent = icon;
-
-    const copy = document.createElement("div");
-    const heading = document.createElement("h4");
-    heading.textContent = title;
-    const detail = document.createElement("p");
-    detail.textContent = description;
-    copy.append(heading, detail);
-    item.append(iconElement, copy);
-    list.append(item);
-  }
-
-  return list;
-}
-
 function renderTailorFinder() {
   const finder = buildTailorFinder();
-  if (tailorSearchResults) {
-    finder.append(buildTailorResults(tailorSearchResults));
-  }
   tailorFinderContainer.replaceChildren(finder);
+
+  if (tailorSearchResults) {
+    tailorResultsContainer.replaceChildren(
+      buildTailorResults(tailorSearchResults)
+    );
+  } else {
+    tailorResultsContainer.replaceChildren();
+  }
 }
 
 function buildTailorFinder() {
@@ -372,7 +356,7 @@ function buildTailorFinder() {
   const privacy = document.createElement("p");
   privacy.className = "tailor-privacy";
   privacy.textContent =
-    "Your precise coordinates are sent through AccessWear to OpenStreetMap only for this search. They are not saved or included in your clothing conversation. The location label and results stay in this browser tab.";
+    "Your location is used only for this search. It is not saved or added to your clothing conversation.";
 
   const progress = document.createElement("p");
   progress.className = "tailor-search-progress";
@@ -512,8 +496,8 @@ function buildTailorResults(attachment) {
   if (attachment.tailors.length > 0) {
     const list = document.createElement("div");
     list.className = "tailor-grid";
-    for (const tailor of attachment.tailors) {
-      list.append(buildTailorCard(tailor));
+    for (const [index, tailor] of attachment.tailors.entries()) {
+      list.append(buildTailorCard(tailor, index));
     }
     section.append(list);
   } else {
@@ -534,45 +518,70 @@ function buildTailorResults(attachment) {
   return section;
 }
 
-function buildTailorCard(tailor) {
+function buildTailorCard(tailor, index) {
   const card = document.createElement("article");
   card.className = "tailor-card";
 
+  const visual = document.createElement("div");
+  visual.className = `tailor-card-visual identity-${index % 4}`;
+  visual.setAttribute("aria-hidden", "true");
+  const icon = document.createElement("span");
+  icon.className = "tailor-card-icon";
+  icon.textContent = "✂";
+  const initials = document.createElement("strong");
+  initials.className = "tailor-card-initials";
+  initials.textContent = businessInitials(tailor.name);
+  visual.append(icon, initials);
+
+  const content = document.createElement("div");
+  content.className = "tailor-card-content";
+
   const category = document.createElement("p");
   category.className = "tailor-category";
-  category.textContent = tailor.category;
+  category.textContent =
+    tailor.category === "Dressmaker" ? "Dressmaker" : "Tailor & alterations";
   const name = document.createElement("h4");
   name.textContent = tailor.name;
   const distance = document.createElement("p");
   distance.className = "tailor-distance";
-  distance.textContent = formatDistance(tailor.distanceMetres);
+  distance.textContent = `${formatDistance(tailor.distanceMetres)} away`;
   const address = document.createElement("p");
   address.className = "tailor-address";
   address.textContent = tailor.address;
 
   const access = document.createElement("p");
   access.className = `tailor-access ${tailor.wheelchair}`;
-  access.textContent = formatWheelchairAccess(tailor.wheelchair);
+  const accessIcon = document.createElement("span");
+  accessIcon.setAttribute("aria-hidden", "true");
+  accessIcon.textContent = "♿";
+  const accessLabel = document.createElement("span");
+  accessLabel.textContent = formatWheelchairAccess(tailor.wheelchair);
+  access.append(accessIcon, accessLabel);
 
-  card.append(category, name, distance, address, access);
+  content.append(name, category, distance, address, access);
 
   if (tailor.alterationService === "confirmed") {
     const alterations = document.createElement("p");
     alterations.className = "tailor-alterations";
-    alterations.textContent = "Alteration service listed";
-    card.append(alterations);
+    const alterationsIcon = document.createElement("span");
+    alterationsIcon.setAttribute("aria-hidden", "true");
+    alterationsIcon.textContent = "✓";
+    const alterationsLabel = document.createElement("span");
+    alterationsLabel.textContent = "Alteration service documented";
+    alterations.append(alterationsIcon, alterationsLabel);
+    content.append(alterations);
   }
 
   if (tailor.openingHours) {
     const openingHours = document.createElement("p");
     openingHours.className = "tailor-hours";
     openingHours.textContent = `Opening hours: ${tailor.openingHours}`;
-    card.append(openingHours);
+    content.append(openingHours);
   }
 
   const actions = document.createElement("div");
   actions.className = "tailor-actions";
-  actions.append(buildExternalLink("View on map", tailor.mapUrl));
+  actions.append(buildExternalLink("View on map →", tailor.mapUrl));
   if (tailor.website) {
     actions.append(buildExternalLink("Website", tailor.website));
   }
@@ -582,8 +591,20 @@ function buildTailorCard(tailor) {
     phone.textContent = "Call";
     actions.append(phone);
   }
-  card.append(actions);
+  content.append(actions);
+  card.append(visual, content);
   return card;
+}
+
+function businessInitials(name) {
+  const words = String(name)
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  return words
+    .slice(0, 2)
+    .map((word) => word[0].toUpperCase())
+    .join("") || "TA";
 }
 
 function buildExternalLink(label, href) {
@@ -596,10 +617,10 @@ function buildExternalLink(label, href) {
 }
 
 function formatWheelchairAccess(value) {
-  if (value === "yes") return "Wheelchair access listed";
-  if (value === "limited") return "Limited wheelchair access listed";
+  if (value === "yes") return "Wheelchair access documented";
+  if (value === "limited") return "Limited wheelchair access documented";
   if (value === "no") return "Listed as not wheelchair accessible";
-  return "Wheelchair access not listed";
+  return "Wheelchair access not documented";
 }
 
 function formatDistance(metres) {
@@ -702,7 +723,6 @@ function createProductCard(result, kind, { current, resultSet }) {
 
   const actions = document.createElement("div");
   actions.className = "product-actions";
-  actions.append(link);
 
   if (product.virtualTryOnAvailable === true) {
     const tryOnButton = document.createElement("button");
@@ -710,19 +730,456 @@ function createProductCard(result, kind, { current, resultSet }) {
     tryOnButton.type = "button";
     tryOnButton.setAttribute("aria-pressed", String(isSelected));
     tryOnButton.textContent = isSelected
-      ? "Selected to preview"
-      : "Preview this item";
+      ? "Selected to try on"
+      : "Try it on";
     tryOnButton.addEventListener("click", () =>
       handleTryOnSelection(product, resultSet)
     );
     actions.append(tryOnButton);
   }
 
+  const measurementButton = document.createElement("button");
+  measurementButton.className = "measurement-button";
+  measurementButton.type = "button";
+  measurementButton.textContent = session.measurementProfile
+    ? "Check my measurements"
+    : "Add measurements";
+  measurementButton.addEventListener("click", () => {
+    openMeasurementDialog(product);
+  });
+  actions.append(measurementButton, link);
+
   content.append(badge, name, retailer, price, sizes);
   if (facts.childElementCount) content.append(facts);
   content.append(actions);
   card.append(imageFrame, content);
   return card;
+}
+
+function buildMeasurementProfileSummary() {
+  const summary = document.createElement("div");
+  summary.className = "measurement-profile-summary";
+
+  const copy = document.createElement("p");
+  const count = Object.keys(session.measurementProfile).length;
+  copy.textContent = `${count} body measurement${count === 1 ? "" : "s"} saved for this conversation.`;
+
+  const reset = document.createElement("button");
+  reset.type = "button";
+  reset.textContent = "Reset measurements";
+  reset.addEventListener("click", () => {
+    session = resetMeasurementProfile(session);
+    saveChatSession(session);
+    renderConversation();
+    setStatus("Saved measurements reset.");
+  });
+
+  summary.append(copy, reset);
+  return summary;
+}
+
+function openMeasurementDialog(product) {
+  const dialog = document.createElement("dialog");
+  dialog.className = "measurement-dialog";
+  dialog.addEventListener("close", () => {
+    dialog.remove();
+    if (dialog.dataset.measurementsChanged === "true") renderConversation();
+  });
+  document.body.append(dialog);
+
+  if (session.measurementProfile) {
+    renderMeasurementComparison(dialog, product);
+  } else {
+    renderMeasurementForm(dialog, product);
+  }
+  dialog.showModal();
+}
+
+function renderMeasurementForm(dialog, product) {
+  dialog.classList.add("measurement-entry-dialog");
+  const shell = document.createElement("div");
+  shell.className = "measurement-dialog-shell";
+
+  const heading = document.createElement("h2");
+  heading.id = "measurement-dialog-heading";
+  heading.textContent = "Add your measurements once";
+  dialog.setAttribute("aria-labelledby", heading.id);
+
+  const intro = document.createElement("p");
+  intro.textContent =
+    "Enter any body measurements you know in centimetres. They stay in this browser conversation and are not sent to the clothing assistant or YouCam.";
+
+  const form = document.createElement("form");
+  form.className = "measurement-form";
+  form.noValidate = true;
+  const grid = document.createElement("div");
+  grid.className = "measurement-field-grid";
+
+  for (const field of MEASUREMENT_FIELDS) {
+    const group = document.createElement("div");
+    group.className = "measurement-field";
+    const label = document.createElement("label");
+    label.htmlFor = `measurement-${field.name}`;
+    label.textContent = `${field.label} (cm)`;
+    const help = document.createElement("span");
+    help.id = `measurement-${field.name}-help`;
+    help.textContent = field.help;
+    const input = document.createElement("input");
+    input.id = `measurement-${field.name}`;
+    input.name = field.name;
+    input.type = "number";
+    input.inputMode = "decimal";
+    input.min = "20";
+    input.max = "250";
+    input.step = "0.5";
+    input.setAttribute("aria-describedby", help.id);
+    group.append(label, help, input);
+    grid.append(group);
+  }
+
+  const error = document.createElement("p");
+  error.className = "measurement-form-error";
+  error.setAttribute("role", "alert");
+
+  const actions = document.createElement("div");
+  actions.className = "measurement-dialog-actions";
+  const save = document.createElement("button");
+  save.type = "submit";
+  save.textContent = "Save and compare";
+  const cancel = document.createElement("button");
+  cancel.className = "secondary-button";
+  cancel.type = "button";
+  cancel.textContent = "Cancel";
+  cancel.addEventListener("click", () => dialog.close());
+  actions.append(save, cancel);
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    try {
+      const values = Object.fromEntries(new FormData(form));
+      const profile = normalizeMeasurementProfile(values);
+      session = setMeasurementProfile(session, profile);
+      saveChatSession(session);
+      dialog.dataset.measurementsChanged = "true";
+      renderMeasurementComparison(dialog, product);
+      setStatus("Measurements saved for this conversation.");
+    } catch (caught) {
+      error.textContent =
+        caught instanceof Error ? caught.message : "Check your measurements.";
+      form.querySelector("input")?.focus();
+    }
+  });
+
+  form.append(grid, error, actions);
+  shell.append(heading, intro, form);
+  dialog.replaceChildren(shell);
+}
+
+function renderMeasurementComparison(dialog, product) {
+  dialog.classList.remove("measurement-entry-dialog");
+  const shell = document.createElement("div");
+  shell.className = "measurement-dialog-shell measurement-comparison-shell";
+
+  const header = document.createElement("header");
+  header.className = "measurement-comparison-header";
+  const headerCopy = document.createElement("div");
+
+  const eyebrow = document.createElement("p");
+  eyebrow.className = "selection-label";
+  eyebrow.textContent = "Your saved measurements";
+  const heading = document.createElement("h2");
+  heading.id = "measurement-dialog-heading";
+  heading.textContent = product.name;
+  dialog.setAttribute("aria-labelledby", heading.id);
+
+  const intro = document.createElement("p");
+  intro.textContent =
+    "This comparison uses documented garment measurements. It is a starting point for alteration questions, not a fit guarantee.";
+  headerCopy.append(eyebrow, heading, intro);
+  header.append(headerCopy, buildMeasurementDialogCloseButton(dialog));
+  shell.append(header);
+
+  const garmentMeasurements = resolveProductMeasurements(product);
+  const comparisons = compareProductMeasurements(
+    session.measurementProfile,
+    garmentMeasurements
+  );
+  if (comparisons.length === 0) {
+    const unavailable = document.createElement("p");
+    unavailable.className = "measurement-unavailable";
+    unavailable.textContent = garmentMeasurements.length
+      ? "The listed garment measurements do not overlap with the body measurements you saved."
+      : "The retailer has not supplied garment measurements for this product, so AccessWear cannot calculate an adjustment.";
+    shell.append(unavailable);
+  } else {
+    shell.append(buildMeasurementSizeTabs(comparisons));
+  }
+
+  const footer = document.createElement("footer");
+  footer.className = "measurement-dialog-footer";
+  const unitNote = document.createElement("p");
+  unitNote.className = "measurement-unit-note";
+  const unitIcon = document.createElement("span");
+  unitIcon.setAttribute("aria-hidden", "true");
+  unitIcon.textContent = "↔";
+  const unitCopy = document.createElement("span");
+  unitCopy.textContent =
+    "Measurements are in centimetres (cm). Saved values are body measurements. Confirm ease, stretch and seam allowance before altering.";
+  unitNote.append(unitIcon, unitCopy);
+
+  const reset = document.createElement("button");
+  reset.className = "measurement-reset-button";
+  reset.type = "button";
+  reset.textContent = "Reset measurements";
+  reset.addEventListener("click", () => {
+    session = resetMeasurementProfile(session);
+    saveChatSession(session);
+    dialog.dataset.measurementsChanged = "true";
+    renderMeasurementForm(dialog, product);
+    setStatus("Saved measurements reset.");
+  });
+  footer.append(unitNote, reset);
+  shell.append(footer);
+  dialog.replaceChildren(shell);
+}
+
+function buildMeasurementDialogCloseButton(dialog) {
+  const close = document.createElement("button");
+  close.className = "measurement-dialog-close";
+  close.type = "button";
+  close.setAttribute("aria-label", "Close measurement comparison");
+  close.textContent = "×";
+  close.addEventListener("click", () => dialog.close());
+  return close;
+}
+
+function resolveProductMeasurements(product) {
+  if (Array.isArray(product.measurements)) return product.measurements;
+
+  return MOCK_PRODUCT_MEASUREMENTS[product.id] ?? [];
+}
+
+function buildMeasurementSizeTabs(sizeResults) {
+  const recommendedIndex = findRecommendedSizeIndex(sizeResults);
+  let selectedIndex = recommendedIndex;
+  const component = document.createElement("section");
+  component.className = "measurement-size-comparison";
+
+  const tabList = document.createElement("div");
+  tabList.className = "measurement-size-tabs";
+  tabList.setAttribute("role", "tablist");
+  tabList.setAttribute("aria-label", "Compare available garment sizes");
+  const panel = document.createElement("div");
+  panel.id = "measurement-size-panel";
+  panel.className = "measurement-size-panel";
+  panel.setAttribute("role", "tabpanel");
+  panel.tabIndex = 0;
+
+  const tabs = sizeResults.map((sizeResult, index) => {
+    const tab = document.createElement("button");
+    tab.id = `measurement-size-tab-${index}`;
+    tab.className = "measurement-size-tab";
+    tab.type = "button";
+    tab.setAttribute("role", "tab");
+    tab.setAttribute("aria-controls", panel.id);
+
+    const label = document.createElement("strong");
+    label.textContent = `Size ${sizeResult.size}`;
+    tab.append(label);
+    if (index === recommendedIndex) {
+      const recommended = document.createElement("span");
+      recommended.className = "recommended-tab-label";
+      recommended.textContent = "Recommended";
+      tab.append(recommended);
+    }
+
+    tab.addEventListener("click", () => selectTab(index));
+    tab.addEventListener("keydown", (event) => {
+      let nextIndex = null;
+      if (["ArrowRight", "ArrowDown"].includes(event.key)) {
+        nextIndex = (index + 1) % tabs.length;
+      } else if (["ArrowLeft", "ArrowUp"].includes(event.key)) {
+        nextIndex = (index - 1 + tabs.length) % tabs.length;
+      } else if (event.key === "Home") {
+        nextIndex = 0;
+      } else if (event.key === "End") {
+        nextIndex = tabs.length - 1;
+      }
+
+      if (nextIndex === null) return;
+      event.preventDefault();
+      selectTab(nextIndex, { moveFocus: true });
+    });
+    tabList.append(tab);
+    return tab;
+  });
+
+  function selectTab(index, { moveFocus = false } = {}) {
+    selectedIndex = index;
+    for (const [tabIndex, tab] of tabs.entries()) {
+      const selected = tabIndex === selectedIndex;
+      tab.setAttribute("aria-selected", String(selected));
+      tab.tabIndex = selected ? 0 : -1;
+    }
+    panel.setAttribute("aria-labelledby", tabs[selectedIndex].id);
+    renderMeasurementTabPanel(
+      panel,
+      sizeResults[selectedIndex],
+      sizeResults[recommendedIndex],
+      selectedIndex === recommendedIndex
+    );
+    if (moveFocus) tabs[selectedIndex].focus();
+  }
+
+  component.append(tabList, panel);
+  selectTab(selectedIndex);
+  return component;
+}
+
+function renderMeasurementTabPanel(
+  panel,
+  selectedSize,
+  recommendedSize,
+  isRecommended
+) {
+  const status = document.createElement("section");
+  status.className = `measurement-fit-status ${
+    isRecommended ? "recommended" : "comparison"
+  }`;
+  const statusIcon = document.createElement("span");
+  statusIcon.className = "measurement-fit-status-icon";
+  statusIcon.setAttribute("aria-hidden", "true");
+  statusIcon.textContent = isRecommended ? "★" : "↔";
+  const statusCopy = document.createElement("div");
+  const statusHeading = document.createElement("h3");
+  statusHeading.textContent = isRecommended
+    ? selectedSize.assessment === "within_guide"
+      ? "Best starting fit"
+      : "Best available starting point"
+    : `Comparing Size ${selectedSize.size}`;
+  const statusDescription = document.createElement("p");
+  statusDescription.textContent = isRecommended
+    ? `Size ${selectedSize.size} offers the most balanced ease based on your saved measurements.`
+    : `Size ${recommendedSize.size} is the recommended starting point. Review Size ${selectedSize.size}'s measurements and alteration notes below.`;
+  statusCopy.append(statusHeading, statusDescription);
+  status.append(statusIcon, statusCopy);
+
+  const cards = document.createElement("div");
+  cards.className = "measurement-detail-list";
+  for (const comparison of selectedSize.comparisons) {
+    cards.append(buildMeasurementDetailCard(comparison));
+  }
+
+  panel.replaceChildren(status, cards);
+}
+
+function buildMeasurementDetailCard(comparison) {
+  const card = document.createElement("article");
+  card.className = `measurement-detail-card ${comparison.status}`;
+
+  const identity = document.createElement("div");
+  identity.className = "measurement-detail-identity";
+  const icon = buildMeasurementIllustration(comparison.name);
+  const titleCopy = document.createElement("div");
+  const heading = document.createElement("h3");
+  heading.textContent = measurementLabel(comparison.name);
+  const help = document.createElement("p");
+  help.textContent = measurementHelp(comparison.name);
+  titleCopy.append(heading, help);
+  identity.append(icon, titleCopy);
+
+  const values = document.createElement("dl");
+  values.className = "measurement-value-grid";
+  values.append(
+    buildMeasurementValue("You", comparison.bodyValueCm),
+    buildMeasurementValue("Garment", comparison.garmentValueCm, "accent"),
+    buildMeasurementValue(
+      isCircumferenceMeasurement(comparison.name) ? "Total room" : "Difference",
+      comparison.differenceCm,
+      "accent"
+    )
+  );
+
+  const assessment = document.createElement("p");
+  assessment.className = "measurement-assessment";
+  const assessmentIcon = document.createElement("span");
+  assessmentIcon.setAttribute("aria-hidden", "true");
+  assessmentIcon.textContent = comparison.status === "within_guide" ? "✓" : "i";
+  const assessmentCopy = document.createElement("span");
+  assessmentCopy.textContent =
+    comparison.status === "within_guide"
+      ? "Within the starting ease guide for this measurement."
+      : comparison.guidance;
+  assessment.append(assessmentIcon, assessmentCopy);
+
+  card.append(identity, values, assessment);
+  return card;
+}
+
+function buildMeasurementValue(label, value, className = "") {
+  const group = document.createElement("div");
+  if (className) group.className = className;
+  const term = document.createElement("dt");
+  term.textContent = label;
+  const detail = document.createElement("dd");
+  const number = document.createElement("strong");
+  number.textContent = formatMeasurementNumber(value);
+  const unit = document.createElement("span");
+  unit.textContent = "cm";
+  detail.append(number, unit);
+  group.append(term, detail);
+  return group;
+}
+
+function measurementIcon(name) {
+  if (["chest", "shoulder_width"].includes(name)) return "↔";
+  if (["waist", "hip"].includes(name)) return "⌒";
+  return "↕";
+}
+
+function buildMeasurementIllustration(name) {
+  const icon = document.createElement("span");
+  icon.className = "measurement-detail-icon";
+  icon.setAttribute("aria-hidden", "true");
+
+  if (["chest", "waist"].includes(name)) {
+    icon.classList.add("has-illustration", name);
+    const image = document.createElement("img");
+    image.src = "/images/measurement.png";
+    image.alt = "";
+    image.className = "measurement-illustration-image";
+    image.addEventListener("error", () => {
+      icon.classList.remove("has-illustration", "chest", "waist");
+      image.remove();
+      icon.textContent = measurementIcon(name);
+    });
+    icon.append(image);
+  } else {
+    icon.textContent = measurementIcon(name);
+  }
+
+  return icon;
+}
+
+function measurementHelp(name) {
+  return MEASUREMENT_FIELDS.find((field) => field.name === name)?.help ??
+    "Your saved value compared with the documented garment measurement.";
+}
+
+function isCircumferenceMeasurement(name) {
+  return ["chest", "waist", "hip"].includes(name);
+}
+
+function measurementLabel(name) {
+  return MEASUREMENT_FIELDS.find((field) => field.name === name)?.label ?? name;
+}
+
+function formatMeasurementNumber(value) {
+  if (value < 0) {
+    const absolute = Math.abs(value);
+    return `−${Number.isInteger(absolute) ? absolute : absolute.toFixed(1)}`;
+  }
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
 
 function handleTryOnSelection(product, resultSet) {

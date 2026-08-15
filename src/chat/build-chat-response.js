@@ -161,6 +161,11 @@ function buildProductCard(product) {
     price: product.price ?? null,
     availability: product.availability ?? "unknown",
     sizes: product.sizes,
+    measurements: product.measurements.map(({ size, name, valueCm }) => ({
+      size,
+      name,
+      valueCm
+    })),
     virtualTryOnAvailable: hasReadyTryOnConfiguration(product)
   };
 }

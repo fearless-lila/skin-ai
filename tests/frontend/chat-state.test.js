@@ -11,8 +11,10 @@ import {
   clearChatSession,
   createEmptyChatSession,
   loadChatSession,
+  resetMeasurementProfile,
   saveChatSession,
-  selectProductForTryOn
+  selectProductForTryOn,
+  setMeasurementProfile
 } from "../../frontend/chat-state.js";
 
 function response(overrides = {}) {
@@ -275,6 +277,39 @@ test("saves, restores and clears session state", () => {
 
   assert.deepEqual(clearChatSession(storage), createEmptyChatSession());
   assert.equal(storage.getItem(SESSION_STORAGE_KEY), null);
+});
+
+test("keeps a measurement profile for the conversation and can reset it", () => {
+  const storage = memoryStorage();
+  const session = setMeasurementProfile(createEmptyChatSession(), {
+    chest: 92,
+    waist: 78
+  });
+
+  saveChatSession(session, storage);
+  assert.deepEqual(loadChatSession(storage).measurementProfile, {
+    chest: 92,
+    waist: 78
+  });
+
+  const reset = resetMeasurementProfile(session);
+  assert.equal(reset.measurementProfile, null);
+  assert.deepEqual(session.measurementProfile, { chest: 92, waist: 78 });
+});
+
+test("does not send the local measurement profile to chat", () => {
+  const session = setMeasurementProfile(createEmptyChatSession(), { chest: 92 });
+  const request = buildChatRequest(session, "Find me a dress");
+
+  assert.equal("measurementProfile" in request, false);
+  assert.equal("measurementProfile" in request.conversationState, false);
+});
+
+test("keeps the saved measurement profile after a chat turn", () => {
+  const session = setMeasurementProfile(createEmptyChatSession(), { chest: 92 });
+  const next = applyChatResponse(session, "Find me a dress", response());
+
+  assert.deepEqual(next.measurementProfile, { chest: 92 });
 });
 
 test("ignores corrupted or unusable stored data", () => {

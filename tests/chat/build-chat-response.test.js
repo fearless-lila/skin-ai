@@ -71,6 +71,14 @@ test("joins matcher results with trusted product-card data", () => {
   assert.equal(avery.product.virtualTryOnAvailable, true);
   assert.equal("virtualTryOn" in avery.product, false);
   assert.equal(avery.product.price.amount, 68);
+  assert.deepEqual(
+    avery.product.measurements.filter(({ size }) => size === "M"),
+    [
+      { size: "M", name: "chest", valueCm: 100 },
+      { size: "M", name: "waist", valueCm: 86 }
+    ]
+  );
+  assert.equal("sourceUrl" in avery.product.measurements[0], false);
   assert.ok(
     avery.compatibility.confirmedMatches.some(
       ({ field, evidenceStatus }) =>
