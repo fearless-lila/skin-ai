@@ -11,6 +11,10 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
+    <div class="page-progress" aria-hidden="true">
+      <span id="page-progress-bar"></span>
+    </div>
+
     <div class="page-shell">
       <header class="site-header">
         <a class="brand" href="/" aria-label="AccessWear home">
@@ -78,7 +82,11 @@
 
         </section>
 
-        <section class="chat-panel" aria-label="Clothing assistant conversation">
+        <section
+          class="chat-panel"
+          id="clothing-assistant"
+          aria-label="Clothing assistant conversation"
+        >
           <div class="conversation-viewport" id="conversation-viewport">
             <div
               class="message-list"
@@ -117,13 +125,14 @@
 
         <section
           class="alteration-section"
+          id="alteration-support"
           aria-labelledby="alteration-section-heading"
         >
           <div class="alteration-main">
             <div class="alteration-section-header">
               <p class="eyebrow">Accessible alteration support</p>
               <h2 id="alteration-section-heading">
-                Find a nearby alteration service
+                Find a nearby <span>alteration</span> service
               </h2>
               <p class="alteration-description">
                 Plan changes before a fitting, avoid wasted trips and make
@@ -150,13 +159,16 @@
           >
             <a class="alteration-support-card" href="#tailor-finder-container">
               <img
-                src="/images/accessible_sewing_studio_consultation.png"
-                alt="A tailor discussing a front-zip garment with a wheelchair user"
+                src="/images/accessible_sewing_consultation_at_home.png"
+                alt="A wheelchair user having a remote garment consultation with a tailor"
                 loading="lazy"
               />
               <span class="alteration-card-body">
-                <strong>Local tailors who understand your needs</strong>
-                <span>Share what makes dressing easier before you travel.</span>
+                <strong>Try on from home</strong>
+                <span
+                  >Preview clothes virtually before deciding what’s worth
+                  trying in person.</span
+                >
               </span>
             </a>
 
@@ -167,8 +179,11 @@
                 loading="lazy"
               />
               <span class="alteration-card-body">
-                <strong>Simple changes, easier dressing</strong>
-                <span>Explore fastenings and fit changes that reduce effort.</span>
+                <strong>Choose with more confidence</strong>
+                <span
+                  >Compare your measurements with garment details to find sizes
+                  more likely to work.</span
+                >
               </span>
             </a>
 
@@ -179,33 +194,30 @@
                 loading="lazy"
               />
               <span class="alteration-card-body">
-                <strong>Step-free, accessible support</strong>
-                <span>Check access details before making a tiring trip.</span>
+                <strong>Save energy for what matters</strong>
+                <span
+                  >Fewer unnecessary try-ons and shopping trips mean less
+                  physical effort.</span
+                >
               </span>
             </a>
 
             <a class="alteration-support-card" href="#tailor-finder-container">
               <img
-                src="/images/accessible_sewing_consultation_at_home.png"
-                alt="A wheelchair user having a remote garment consultation with a tailor"
+                src="/images/accessible_sewing_studio_consultation.png"
+                alt="A tailor discussing a front-zip garment with a wheelchair user"
                 loading="lazy"
               />
               <span class="alteration-card-body">
-                <strong>Home visits or remote support</strong>
-                <span>Ask what can be handled from home when travel costs energy.</span>
+                <strong>Support built around you</strong>
+                <span
+                  >Get disability-aware AI recommendations and easily share fit
+                  details with a tailor.</span
+                >
               </span>
             </a>
           </nav>
 
-          <div class="alteration-reassurance">
-            <span class="alteration-reassurance-icon" aria-hidden="true"
-              >&#9829;</span
-            >
-            <span>
-              <strong>Your comfort and independence matter.</strong>
-              Choose support that works around your access needs.
-            </span>
-          </div>
         </section>
       </main>
 
@@ -214,6 +226,17 @@
         not prove fit, comfort or accessibility.
       </footer>
     </div>
+
+    <nav class="journey-nav" id="journey-nav" aria-label="Page sections">
+      <a href="#clothing-assistant" data-section="clothing-assistant">
+        <span aria-hidden="true">⌕</span>
+        <span>Clothing assistant</span>
+      </a>
+      <a href="#alteration-support" data-section="alteration-support">
+        <span aria-hidden="true">✂</span>
+        <span>Tailor support</span>
+      </a>
+    </nav>
 
     <template id="welcome-template">
       <article class="message assistant-message">

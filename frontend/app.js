@@ -17,6 +17,7 @@ import {
 } from "./measurement-profile.js";
 import { findRecommendedSizeIndex } from "./measurement-tabs.js";
 import { MOCK_PRODUCT_MEASUREMENTS } from "./mock-product-measurements.js";
+import { hasAlterationIntent } from "./intent-navigation.js";
 import { validateTryOnPhoto } from "./photo-selection.js";
 import { uploadTryOnPhoto } from "./try-on-upload.js";
 import {
@@ -46,6 +47,9 @@ const tailorFinderContainer = document.querySelector(
 const tailorResultsContainer = document.querySelector(
   "#tailor-results-container"
 );
+const alterationSection = document.querySelector(".alteration-section");
+const journeyNav = document.querySelector("#journey-nav");
+const pageProgressBar = document.querySelector("#page-progress-bar");
 const statusRegion = document.querySelector("#request-status");
 const welcomeTemplate = document.querySelector("#welcome-template");
 
@@ -61,6 +65,8 @@ let tailorSearchResults = null;
 
 renderConversation();
 renderTailorFinder();
+setupScrollInteractions();
+setupJourneyNavigation();
 queueMicrotask(scrollConversationToBottom);
 
 form.addEventListener("submit", handleSubmit);
@@ -86,6 +92,8 @@ async function handleSubmit(event) {
   const currentMessage = input.value.trim();
   if (!currentMessage) return;
 
+  const shouldGuideToAlterations = hasAlterationIntent(currentMessage);
+  let responseReceived = false;
   const requestBody = buildChatRequest(session, currentMessage);
   appendMessage("user", currentMessage);
   scrollConversationToBottom();
@@ -118,6 +126,7 @@ async function handleSubmit(event) {
     saveChatSession(session);
     renderConversation();
     scrollConversationToBottom();
+    responseReceived = true;
     setStatus(
       body.searchPerformed ? "Accessible clothing search complete." : "Reply received."
     );
@@ -130,7 +139,12 @@ async function handleSubmit(event) {
     setStatus("The request could not be completed.");
   } finally {
     setBusy(false);
-    input.focus();
+    if (responseReceived && shouldGuideToAlterations) {
+      setStatus("Alteration support is ready below.");
+      guideToAlterationSupport();
+    } else {
+      input.focus();
+    }
   }
 }
 
@@ -1771,11 +1785,108 @@ function setBusy(isBusy) {
   input.disabled = isBusy;
   sendButton.disabled = isBusy;
   clearButton.disabled = isBusy;
-  sendButton.querySelector("span").textContent = isBusy ? "Sending" : "Send";
+  sendButton.querySelector("span:last-child").textContent = isBusy
+    ? "Sending"
+    : "Send";
 }
 
 function setStatus(message) {
   statusRegion.textContent = message;
+}
+
+function setupScrollInteractions() {
+  const revealTargets = document.querySelectorAll(
+    ".chat-panel, .alteration-section"
+  );
+  if (
+    prefersReducedMotion() ||
+    typeof IntersectionObserver !== "function"
+  ) {
+    for (const target of revealTargets) target.classList.add("is-visible");
+    return;
+  }
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        entry.target.classList.add("is-visible");
+        observer.unobserve(entry.target);
+      }
+    },
+    { threshold: 0.12, rootMargin: "0px 0px -8%" }
+  );
+
+  for (const target of revealTargets) {
+    target.classList.add("scroll-reveal");
+    observer.observe(target);
+  }
+}
+
+function guideToAlterationSupport() {
+  if (!alterationSection) return;
+
+  const reducedMotion = prefersReducedMotion();
+  alterationSection.classList.add("intent-guided");
+  alterationSection.scrollIntoView({
+    behavior: reducedMotion ? "auto" : "smooth",
+    block: "start"
+  });
+
+  const focusDelay = reducedMotion ? 0 : 700;
+  window.setTimeout(() => {
+    tailorFinderContainer.querySelector("button")?.focus({
+      preventScroll: true
+    });
+    alterationSection.classList.remove("intent-guided");
+  }, focusDelay);
+}
+
+function setupJourneyNavigation() {
+  if (!journeyNav || !pageProgressBar || !alterationSection) return;
+
+  const hero = document.querySelector(".hero");
+  const navigationLinks = [...journeyNav.querySelectorAll("a[data-section]")];
+  let frameRequested = false;
+
+  function updateJourneyNavigation() {
+    frameRequested = false;
+    const documentHeight = document.documentElement.scrollHeight;
+    const scrollableDistance = Math.max(1, documentHeight - window.innerHeight);
+    const progress = Math.min(1, Math.max(0, window.scrollY / scrollableDistance));
+    pageProgressBar.style.transform = `scaleX(${progress})`;
+
+    const revealPoint = hero
+      ? hero.offsetTop + hero.offsetHeight * 0.55
+      : window.innerHeight * 0.55;
+    journeyNav.classList.toggle("is-visible", window.scrollY > revealPoint);
+
+    const activeSection =
+      window.scrollY + window.innerHeight * 0.42 >= alterationSection.offsetTop
+        ? "alteration-support"
+        : "clothing-assistant";
+    for (const link of navigationLinks) {
+      if (link.dataset.section === activeSection) {
+        link.setAttribute("aria-current", "location");
+      } else {
+        link.removeAttribute("aria-current");
+      }
+    }
+  }
+
+  function requestJourneyUpdate() {
+    if (frameRequested) return;
+    frameRequested = true;
+    window.requestAnimationFrame(updateJourneyNavigation);
+  }
+
+  window.addEventListener("scroll", requestJourneyUpdate, { passive: true });
+  window.addEventListener("resize", requestJourneyUpdate);
+  updateJourneyNavigation();
+}
+
+function prefersReducedMotion() {
+  return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
 }
 
 function scrollConversationToBottom({ smooth = false } = {}) {
