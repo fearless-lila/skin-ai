@@ -783,12 +783,13 @@ h1 span {
 }
 
 .product-card {
+  width: min(100%, 1080px);
   min-width: 0;
   overflow: hidden;
   display: grid;
-  grid-template-columns: minmax(260px, 0.37fr) minmax(0, 0.63fr);
+  grid-template-columns: minmax(210px, 250px) minmax(0, 1fr);
   border: 1px solid var(--line);
-  border-radius: 22px;
+  border-radius: 18px;
   background: white;
   box-shadow: var(--shadow-soft);
   transition:
@@ -811,7 +812,7 @@ h1 span {
 
 .product-image-frame {
   position: relative;
-  min-height: 390px;
+  min-height: 280px;
   overflow: hidden;
   display: grid;
   place-items: center;
@@ -843,13 +844,13 @@ h1 span {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  padding: clamp(22px, 3.2vw, 34px);
+  padding: clamp(18px, 2.2vw, 24px);
 }
 
 .match-badge {
   width: fit-content;
-  margin: 0 0 12px;
-  padding: 6px 10px;
+  margin: 0 0 8px;
+  padding: 5px 9px;
   border-radius: 999px;
   font-size: 0.74rem;
   font-weight: 850;
@@ -867,7 +868,7 @@ h1 span {
 
 .product-content h4 {
   margin: 0;
-  font-size: clamp(1.25rem, 2.4vw, 1.65rem);
+  font-size: clamp(1.2rem, 2vw, 1.48rem);
   line-height: 1.22;
   letter-spacing: -0.025em;
 }
@@ -881,17 +882,17 @@ h1 span {
 }
 
 .price {
-  margin: 13px 0 2px;
-  font-size: 1.22rem;
+  margin: 9px 0 2px;
+  font-size: 1.12rem;
   font-weight: 850;
 }
 
 .product-feature-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  margin: 20px 0 0;
-  padding: 18px 0;
+  gap: 10px;
+  margin: 13px 0 0;
+  padding: 12px 0;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
 }
@@ -899,14 +900,14 @@ h1 span {
 .product-feature {
   min-width: 0;
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr);
+  grid-template-columns: 32px minmax(0, 1fr);
   align-items: start;
   gap: 9px;
 }
 
 .product-feature-icon {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   display: grid;
   place-items: center;
   border: 1px solid #f2bdce;
@@ -939,9 +940,9 @@ h1 span {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 12px 14px;
+  gap: 10px 12px;
   margin-top: auto;
-  padding-top: 20px;
+  padding-top: 14px;
 }
 
 .product-link,
@@ -953,7 +954,7 @@ h1 span {
 }
 
 .product-link {
-  min-height: 48px;
+  min-height: 44px;
   margin-left: auto;
   display: inline-flex;
   align-items: center;
@@ -975,6 +976,12 @@ h1 span {
   align-items: center;
   justify-content: center;
   gap: 9px;
+}
+
+.product-actions .try-on-button,
+.product-actions .measurement-button {
+  min-height: 44px;
+  padding-inline: 15px;
 }
 
 .measurement-button,
@@ -2557,11 +2564,11 @@ footer {
   }
 
   .product-card {
-    grid-template-columns: minmax(220px, 0.42fr) minmax(0, 0.58fr);
+    grid-template-columns: minmax(170px, 220px) minmax(0, 1fr);
   }
 
   .product-image-frame {
-    min-height: 420px;
+    min-height: 290px;
   }
 
   .product-feature-grid {
@@ -2793,7 +2800,7 @@ footer {
   }
 
   .product-image-frame {
-    min-height: 310px;
+    min-height: 250px;
   }
 
   .product-feature-grid {
