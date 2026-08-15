@@ -147,6 +147,7 @@ async function handleSubmit(event) {
         ? error.message
         : "AccessWear is unavailable right now."
     );
+    scrollConversationToBottom({ smooth: true });
     setStatus("The request could not be completed.");
   } finally {
     setBusy(false);
@@ -1638,7 +1639,7 @@ function buildGenerationPanel(selectedProduct) {
     const confirmation = document.createElement("p");
     confirmation.className = "generation-complete";
     confirmation.textContent =
-      "The generated image has been added to the conversation above, where it stays with your recent messages.";
+      "Your preview is ready and has been added as the newest message. The conversation will move to it automatically.";
     panel.append(confirmation);
     return panel;
   }
@@ -1726,6 +1727,7 @@ async function handleTryOnGeneration(selectedProduct) {
   }
 
   const controller = new AbortController();
+  let resultMessageAdded = false;
   tryOnTaskController = controller;
   photoSelection.generationStatus = "processing";
   photoSelection.generationError = null;
@@ -1763,8 +1765,7 @@ async function handleTryOnGeneration(selectedProduct) {
       resultUrl: result.resultUrl
     });
     saveChatSession(session);
-    renderConversation();
-    scrollConversationToBottom({ smooth: true });
+    resultMessageAdded = true;
     setStatus("Your virtual clothing preview is ready.");
   } catch (error) {
     if (error?.name === "AbortError" || tryOnTaskController !== controller) {
@@ -1784,11 +1785,15 @@ async function handleTryOnGeneration(selectedProduct) {
     if (tryOnTaskController === controller) {
       tryOnTaskController = null;
       renderConversation();
-      document.querySelector(
-        photoSelection.generationError
-          ? "#generation-error"
-          : "#try-on-selection"
-      )?.focus();
+      if (resultMessageAdded) {
+        scrollConversationToBottom({ smooth: true, waitForImage: true });
+      } else {
+        document.querySelector(
+          photoSelection.generationError
+            ? "#generation-error"
+            : "#try-on-selection"
+        )?.focus();
+      }
     }
   }
 }
@@ -2062,9 +2067,27 @@ function prefersReducedMotion() {
   return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
 }
 
-function scrollConversationToBottom({ smooth = false } = {}) {
-  messageList.scrollTo({
-    top: messageList.scrollHeight,
-    behavior: smooth ? "smooth" : "auto"
-  });
+function scrollConversationToBottom({
+  smooth = false,
+  waitForImage = false
+} = {}) {
+  const behavior = smooth && !prefersReducedMotion() ? "smooth" : "auto";
+  const scrollToLatest = () => {
+    messageList.scrollTo({
+      top: messageList.scrollHeight,
+      behavior
+    });
+  };
+
+  window.requestAnimationFrame(scrollToLatest);
+
+  if (!waitForImage) return;
+
+  const latestImage = messageList.querySelector(
+    ".message:last-child .message-image-attachment img"
+  );
+  if (latestImage && !latestImage.complete) {
+    latestImage.addEventListener("load", scrollToLatest, { once: true });
+    latestImage.addEventListener("error", scrollToLatest, { once: true });
+  }
 }
