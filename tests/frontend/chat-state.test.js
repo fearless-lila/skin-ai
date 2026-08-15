@@ -298,7 +298,10 @@ test("keeps a measurement profile for the conversation and can reset it", () => 
 });
 
 test("does not send the local measurement profile to chat", () => {
-  const session = setMeasurementProfile(createEmptyChatSession(), { chest: 92 });
+  const session = setMeasurementProfile(createEmptyChatSession(), {
+    chest: 92,
+    waist: 78
+  });
   const request = buildChatRequest(session, "Find me a dress");
 
   assert.equal("measurementProfile" in request, false);
@@ -306,10 +309,13 @@ test("does not send the local measurement profile to chat", () => {
 });
 
 test("keeps the saved measurement profile after a chat turn", () => {
-  const session = setMeasurementProfile(createEmptyChatSession(), { chest: 92 });
+  const session = setMeasurementProfile(createEmptyChatSession(), {
+    chest: 92,
+    waist: 78
+  });
   const next = applyChatResponse(session, "Find me a dress", response());
 
-  assert.deepEqual(next.measurementProfile, { chest: 92 });
+  assert.deepEqual(next.measurementProfile, { chest: 92, waist: 78 });
 });
 
 test("ignores corrupted or unusable stored data", () => {

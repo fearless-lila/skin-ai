@@ -49,6 +49,46 @@
           "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-001/size-guide"
         },
         {
+          "size": "S",
+          "name": "hip",
+          "valueCm": 96,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment hip: 96 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-001/size-guide"
+        },
+        {
+          "size": "S",
+          "name": "shoulder_width",
+          "valueCm": 38,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment shoulder width: 38 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-001/size-guide"
+        },
+        {
+          "size": "S",
+          "name": "sleeve_length",
+          "valueCm": 30,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment sleeve length: 30 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-001/size-guide"
+        },
+        {
+          "size": "S",
+          "name": "inside_leg",
+          "valueCm": 76,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment inside leg: 76 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-001/size-guide"
+        },
+        {
+          "size": "S",
+          "name": "garment_length",
+          "valueCm": 112,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment garment length: 112 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-001/size-guide"
+        },
+        {
           "size": "M",
           "name": "chest",
           "valueCm": 100,
@@ -65,6 +105,46 @@
           "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-001/size-guide"
         },
         {
+          "size": "M",
+          "name": "hip",
+          "valueCm": 104,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment hip: 104 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-001/size-guide"
+        },
+        {
+          "size": "M",
+          "name": "shoulder_width",
+          "valueCm": 40,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment shoulder width: 40 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-001/size-guide"
+        },
+        {
+          "size": "M",
+          "name": "sleeve_length",
+          "valueCm": 31,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment sleeve length: 31 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-001/size-guide"
+        },
+        {
+          "size": "M",
+          "name": "inside_leg",
+          "valueCm": 77,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment inside leg: 77 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-001/size-guide"
+        },
+        {
+          "size": "M",
+          "name": "garment_length",
+          "valueCm": 113,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment garment length: 113 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-001/size-guide"
+        },
+        {
           "size": "L",
           "name": "chest",
           "valueCm": 108,
@@ -78,6 +158,46 @@
           "valueCm": 94,
           "status": "retailer_provided",
           "sourceText": "Size L garment waist: 94 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-001/size-guide"
+        },
+        {
+          "size": "L",
+          "name": "hip",
+          "valueCm": 112,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment hip: 112 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-001/size-guide"
+        },
+        {
+          "size": "L",
+          "name": "shoulder_width",
+          "valueCm": 42,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment shoulder width: 42 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-001/size-guide"
+        },
+        {
+          "size": "L",
+          "name": "sleeve_length",
+          "valueCm": 32,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment sleeve length: 32 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-001/size-guide"
+        },
+        {
+          "size": "L",
+          "name": "inside_leg",
+          "valueCm": 78,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment inside leg: 78 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-001/size-guide"
+        },
+        {
+          "size": "L",
+          "name": "garment_length",
+          "valueCm": 114,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment garment length: 114 cm.",
           "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-001/size-guide"
         }
       ],
@@ -170,6 +290,38 @@
           "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-002/size-guide"
         },
         {
+          "size": "S",
+          "name": "shoulder_width",
+          "valueCm": 37,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment shoulder width: 37 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-002/size-guide"
+        },
+        {
+          "size": "S",
+          "name": "sleeve_length",
+          "valueCm": 58,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment sleeve length: 58 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-002/size-guide"
+        },
+        {
+          "size": "S",
+          "name": "inside_leg",
+          "valueCm": 76,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment inside leg: 76 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-002/size-guide"
+        },
+        {
+          "size": "S",
+          "name": "garment_length",
+          "valueCm": 118,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment garment length: 118 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-002/size-guide"
+        },
+        {
           "size": "M",
           "name": "chest",
           "valueCm": 96,
@@ -194,6 +346,38 @@
           "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-002/size-guide"
         },
         {
+          "size": "M",
+          "name": "shoulder_width",
+          "valueCm": 39,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment shoulder width: 39 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-002/size-guide"
+        },
+        {
+          "size": "M",
+          "name": "sleeve_length",
+          "valueCm": 59,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment sleeve length: 59 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-002/size-guide"
+        },
+        {
+          "size": "M",
+          "name": "inside_leg",
+          "valueCm": 77,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment inside leg: 77 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-002/size-guide"
+        },
+        {
+          "size": "M",
+          "name": "garment_length",
+          "valueCm": 120,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment garment length: 120 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-002/size-guide"
+        },
+        {
           "size": "L",
           "name": "chest",
           "valueCm": 104,
@@ -215,6 +399,38 @@
           "valueCm": 112,
           "status": "retailer_provided",
           "sourceText": "Size L garment hip: 112 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-002/size-guide"
+        },
+        {
+          "size": "L",
+          "name": "shoulder_width",
+          "valueCm": 41,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment shoulder width: 41 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-002/size-guide"
+        },
+        {
+          "size": "L",
+          "name": "sleeve_length",
+          "valueCm": 60,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment sleeve length: 60 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-002/size-guide"
+        },
+        {
+          "size": "L",
+          "name": "inside_leg",
+          "valueCm": 78,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment inside leg: 78 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-002/size-guide"
+        },
+        {
+          "size": "L",
+          "name": "garment_length",
+          "valueCm": 122,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment garment length: 122 cm.",
           "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-002/size-guide"
         }
       ],
@@ -292,10 +508,50 @@
         },
         {
           "size": "S",
+          "name": "waist",
+          "valueCm": 88,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment waist: 88 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-shirt-001/size-guide"
+        },
+        {
+          "size": "S",
+          "name": "hip",
+          "valueCm": 100,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment hip: 100 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-shirt-001/size-guide"
+        },
+        {
+          "size": "S",
+          "name": "shoulder_width",
+          "valueCm": 38,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment shoulder width: 38 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-shirt-001/size-guide"
+        },
+        {
+          "size": "S",
           "name": "sleeve_length",
           "valueCm": 60,
           "status": "retailer_provided",
           "sourceText": "Size S garment sleeve length: 60 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-shirt-001/size-guide"
+        },
+        {
+          "size": "S",
+          "name": "inside_leg",
+          "valueCm": 76,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment inside leg: 76 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-shirt-001/size-guide"
+        },
+        {
+          "size": "S",
+          "name": "garment_length",
+          "valueCm": 68,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment garment length: 68 cm.",
           "sourceUrl": "https://demo.skin-ai.example/products/mock-shirt-001/size-guide"
         },
         {
@@ -308,10 +564,50 @@
         },
         {
           "size": "M",
+          "name": "waist",
+          "valueCm": 96,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment waist: 96 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-shirt-001/size-guide"
+        },
+        {
+          "size": "M",
+          "name": "hip",
+          "valueCm": 108,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment hip: 108 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-shirt-001/size-guide"
+        },
+        {
+          "size": "M",
+          "name": "shoulder_width",
+          "valueCm": 40,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment shoulder width: 40 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-shirt-001/size-guide"
+        },
+        {
+          "size": "M",
           "name": "sleeve_length",
           "valueCm": 61,
           "status": "retailer_provided",
           "sourceText": "Size M garment sleeve length: 61 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-shirt-001/size-guide"
+        },
+        {
+          "size": "M",
+          "name": "inside_leg",
+          "valueCm": 77,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment inside leg: 77 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-shirt-001/size-guide"
+        },
+        {
+          "size": "M",
+          "name": "garment_length",
+          "valueCm": 70,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment garment length: 70 cm.",
           "sourceUrl": "https://demo.skin-ai.example/products/mock-shirt-001/size-guide"
         },
         {
@@ -324,10 +620,50 @@
         },
         {
           "size": "L",
+          "name": "waist",
+          "valueCm": 104,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment waist: 104 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-shirt-001/size-guide"
+        },
+        {
+          "size": "L",
+          "name": "hip",
+          "valueCm": 116,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment hip: 116 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-shirt-001/size-guide"
+        },
+        {
+          "size": "L",
+          "name": "shoulder_width",
+          "valueCm": 42,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment shoulder width: 42 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-shirt-001/size-guide"
+        },
+        {
+          "size": "L",
           "name": "sleeve_length",
           "valueCm": 62,
           "status": "retailer_provided",
           "sourceText": "Size L garment sleeve length: 62 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-shirt-001/size-guide"
+        },
+        {
+          "size": "L",
+          "name": "inside_leg",
+          "valueCm": 78,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment inside leg: 78 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-shirt-001/size-guide"
+        },
+        {
+          "size": "L",
+          "name": "garment_length",
+          "valueCm": 72,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment garment length: 72 cm.",
           "sourceUrl": "https://demo.skin-ai.example/products/mock-shirt-001/size-guide"
         },
         {
@@ -340,10 +676,50 @@
         },
         {
           "size": "XL",
+          "name": "waist",
+          "valueCm": 112,
+          "status": "retailer_provided",
+          "sourceText": "Size XL garment waist: 112 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-shirt-001/size-guide"
+        },
+        {
+          "size": "XL",
+          "name": "hip",
+          "valueCm": 124,
+          "status": "retailer_provided",
+          "sourceText": "Size XL garment hip: 124 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-shirt-001/size-guide"
+        },
+        {
+          "size": "XL",
+          "name": "shoulder_width",
+          "valueCm": 44,
+          "status": "retailer_provided",
+          "sourceText": "Size XL garment shoulder width: 44 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-shirt-001/size-guide"
+        },
+        {
+          "size": "XL",
           "name": "sleeve_length",
           "valueCm": 63,
           "status": "retailer_provided",
           "sourceText": "Size XL garment sleeve length: 63 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-shirt-001/size-guide"
+        },
+        {
+          "size": "XL",
+          "name": "inside_leg",
+          "valueCm": 79,
+          "status": "retailer_provided",
+          "sourceText": "Size XL garment inside leg: 79 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-shirt-001/size-guide"
+        },
+        {
+          "size": "XL",
+          "name": "garment_length",
+          "valueCm": 74,
+          "status": "retailer_provided",
+          "sourceText": "Size XL garment garment length: 74 cm.",
           "sourceUrl": "https://demo.skin-ai.example/products/mock-shirt-001/size-guide"
         }
       ],
@@ -435,6 +811,38 @@
           "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-003/size-guide"
         },
         {
+          "size": "S",
+          "name": "shoulder_width",
+          "valueCm": 38,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment shoulder width: 38 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-003/size-guide"
+        },
+        {
+          "size": "S",
+          "name": "sleeve_length",
+          "valueCm": 42,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment sleeve length: 42 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-003/size-guide"
+        },
+        {
+          "size": "S",
+          "name": "inside_leg",
+          "valueCm": 76,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment inside leg: 76 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-003/size-guide"
+        },
+        {
+          "size": "S",
+          "name": "garment_length",
+          "valueCm": 110,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment garment length: 110 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-003/size-guide"
+        },
+        {
           "size": "M",
           "name": "chest",
           "valueCm": 98,
@@ -459,6 +867,38 @@
           "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-003/size-guide"
         },
         {
+          "size": "M",
+          "name": "shoulder_width",
+          "valueCm": 40,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment shoulder width: 40 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-003/size-guide"
+        },
+        {
+          "size": "M",
+          "name": "sleeve_length",
+          "valueCm": 43,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment sleeve length: 43 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-003/size-guide"
+        },
+        {
+          "size": "M",
+          "name": "inside_leg",
+          "valueCm": 77,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment inside leg: 77 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-003/size-guide"
+        },
+        {
+          "size": "M",
+          "name": "garment_length",
+          "valueCm": 112,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment garment length: 112 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-003/size-guide"
+        },
+        {
           "size": "L",
           "name": "chest",
           "valueCm": 106,
@@ -480,6 +920,38 @@
           "valueCm": 114,
           "status": "retailer_provided",
           "sourceText": "Size L garment hip: 114 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-003/size-guide"
+        },
+        {
+          "size": "L",
+          "name": "shoulder_width",
+          "valueCm": 42,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment shoulder width: 42 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-003/size-guide"
+        },
+        {
+          "size": "L",
+          "name": "sleeve_length",
+          "valueCm": 44,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment sleeve length: 44 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-003/size-guide"
+        },
+        {
+          "size": "L",
+          "name": "inside_leg",
+          "valueCm": 78,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment inside leg: 78 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-003/size-guide"
+        },
+        {
+          "size": "L",
+          "name": "garment_length",
+          "valueCm": 114,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment garment length: 114 cm.",
           "sourceUrl": "https://demo.skin-ai.example/products/mock-dress-003/size-guide"
         }
       ],
@@ -555,6 +1027,14 @@
       "measurements": [
         {
           "size": "S",
+          "name": "chest",
+          "valueCm": 92,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment chest: 92 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-trousers-001/size-guide"
+        },
+        {
+          "size": "S",
           "name": "waist",
           "valueCm": 74,
           "status": "retailer_provided",
@@ -571,10 +1051,42 @@
         },
         {
           "size": "S",
+          "name": "shoulder_width",
+          "valueCm": 38,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment shoulder width: 38 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-trousers-001/size-guide"
+        },
+        {
+          "size": "S",
+          "name": "sleeve_length",
+          "valueCm": 60,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment sleeve length: 60 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-trousers-001/size-guide"
+        },
+        {
+          "size": "S",
           "name": "inside_leg",
           "valueCm": 75,
           "status": "retailer_provided",
           "sourceText": "Size S garment inside leg: 75 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-trousers-001/size-guide"
+        },
+        {
+          "size": "S",
+          "name": "garment_length",
+          "valueCm": 98,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment garment length: 98 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-trousers-001/size-guide"
+        },
+        {
+          "size": "M",
+          "name": "chest",
+          "valueCm": 100,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment chest: 100 cm.",
           "sourceUrl": "https://demo.skin-ai.example/products/mock-trousers-001/size-guide"
         },
         {
@@ -595,10 +1107,42 @@
         },
         {
           "size": "M",
+          "name": "shoulder_width",
+          "valueCm": 40,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment shoulder width: 40 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-trousers-001/size-guide"
+        },
+        {
+          "size": "M",
+          "name": "sleeve_length",
+          "valueCm": 61,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment sleeve length: 61 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-trousers-001/size-guide"
+        },
+        {
+          "size": "M",
           "name": "inside_leg",
           "valueCm": 76,
           "status": "retailer_provided",
           "sourceText": "Size M garment inside leg: 76 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-trousers-001/size-guide"
+        },
+        {
+          "size": "M",
+          "name": "garment_length",
+          "valueCm": 100,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment garment length: 100 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-trousers-001/size-guide"
+        },
+        {
+          "size": "L",
+          "name": "chest",
+          "valueCm": 108,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment chest: 108 cm.",
           "sourceUrl": "https://demo.skin-ai.example/products/mock-trousers-001/size-guide"
         },
         {
@@ -619,10 +1163,42 @@
         },
         {
           "size": "L",
+          "name": "shoulder_width",
+          "valueCm": 42,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment shoulder width: 42 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-trousers-001/size-guide"
+        },
+        {
+          "size": "L",
+          "name": "sleeve_length",
+          "valueCm": 62,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment sleeve length: 62 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-trousers-001/size-guide"
+        },
+        {
+          "size": "L",
           "name": "inside_leg",
           "valueCm": 77,
           "status": "retailer_provided",
           "sourceText": "Size L garment inside leg: 77 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-trousers-001/size-guide"
+        },
+        {
+          "size": "L",
+          "name": "garment_length",
+          "valueCm": 102,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment garment length: 102 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-trousers-001/size-guide"
+        },
+        {
+          "size": "XL",
+          "name": "chest",
+          "valueCm": 116,
+          "status": "retailer_provided",
+          "sourceText": "Size XL garment chest: 116 cm.",
           "sourceUrl": "https://demo.skin-ai.example/products/mock-trousers-001/size-guide"
         },
         {
@@ -643,10 +1219,34 @@
         },
         {
           "size": "XL",
+          "name": "shoulder_width",
+          "valueCm": 44,
+          "status": "retailer_provided",
+          "sourceText": "Size XL garment shoulder width: 44 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-trousers-001/size-guide"
+        },
+        {
+          "size": "XL",
+          "name": "sleeve_length",
+          "valueCm": 63,
+          "status": "retailer_provided",
+          "sourceText": "Size XL garment sleeve length: 63 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-trousers-001/size-guide"
+        },
+        {
+          "size": "XL",
           "name": "inside_leg",
           "valueCm": 78,
           "status": "retailer_provided",
           "sourceText": "Size XL garment inside leg: 78 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-trousers-001/size-guide"
+        },
+        {
+          "size": "XL",
+          "name": "garment_length",
+          "valueCm": 104,
+          "status": "retailer_provided",
+          "sourceText": "Size XL garment garment length: 104 cm.",
           "sourceUrl": "https://demo.skin-ai.example/products/mock-trousers-001/size-guide"
         }
       ],
@@ -719,10 +1319,50 @@
         },
         {
           "size": "S",
+          "name": "waist",
+          "valueCm": 88,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment waist: 88 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-cardigan-001/size-guide"
+        },
+        {
+          "size": "S",
+          "name": "hip",
+          "valueCm": 104,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment hip: 104 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-cardigan-001/size-guide"
+        },
+        {
+          "size": "S",
+          "name": "shoulder_width",
+          "valueCm": 39,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment shoulder width: 39 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-cardigan-001/size-guide"
+        },
+        {
+          "size": "S",
           "name": "sleeve_length",
           "valueCm": 59,
           "status": "retailer_provided",
           "sourceText": "Size S garment sleeve length: 59 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-cardigan-001/size-guide"
+        },
+        {
+          "size": "S",
+          "name": "inside_leg",
+          "valueCm": 76,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment inside leg: 76 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-cardigan-001/size-guide"
+        },
+        {
+          "size": "S",
+          "name": "garment_length",
+          "valueCm": 66,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment garment length: 66 cm.",
           "sourceUrl": "https://demo.skin-ai.example/products/mock-cardigan-001/size-guide"
         },
         {
@@ -735,10 +1375,50 @@
         },
         {
           "size": "M",
+          "name": "waist",
+          "valueCm": 96,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment waist: 96 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-cardigan-001/size-guide"
+        },
+        {
+          "size": "M",
+          "name": "hip",
+          "valueCm": 112,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment hip: 112 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-cardigan-001/size-guide"
+        },
+        {
+          "size": "M",
+          "name": "shoulder_width",
+          "valueCm": 41,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment shoulder width: 41 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-cardigan-001/size-guide"
+        },
+        {
+          "size": "M",
           "name": "sleeve_length",
           "valueCm": 60,
           "status": "retailer_provided",
           "sourceText": "Size M garment sleeve length: 60 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-cardigan-001/size-guide"
+        },
+        {
+          "size": "M",
+          "name": "inside_leg",
+          "valueCm": 77,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment inside leg: 77 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-cardigan-001/size-guide"
+        },
+        {
+          "size": "M",
+          "name": "garment_length",
+          "valueCm": 68,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment garment length: 68 cm.",
           "sourceUrl": "https://demo.skin-ai.example/products/mock-cardigan-001/size-guide"
         },
         {
@@ -751,10 +1431,50 @@
         },
         {
           "size": "L",
+          "name": "waist",
+          "valueCm": 104,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment waist: 104 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-cardigan-001/size-guide"
+        },
+        {
+          "size": "L",
+          "name": "hip",
+          "valueCm": 120,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment hip: 120 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-cardigan-001/size-guide"
+        },
+        {
+          "size": "L",
+          "name": "shoulder_width",
+          "valueCm": 43,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment shoulder width: 43 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-cardigan-001/size-guide"
+        },
+        {
+          "size": "L",
           "name": "sleeve_length",
           "valueCm": 61,
           "status": "retailer_provided",
           "sourceText": "Size L garment sleeve length: 61 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-cardigan-001/size-guide"
+        },
+        {
+          "size": "L",
+          "name": "inside_leg",
+          "valueCm": 78,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment inside leg: 78 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-cardigan-001/size-guide"
+        },
+        {
+          "size": "L",
+          "name": "garment_length",
+          "valueCm": 70,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment garment length: 70 cm.",
           "sourceUrl": "https://demo.skin-ai.example/products/mock-cardigan-001/size-guide"
         }
       ],
@@ -831,10 +1551,50 @@
         },
         {
           "size": "S",
+          "name": "waist",
+          "valueCm": 82,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment waist: 82 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-blouse-001/size-guide"
+        },
+        {
+          "size": "S",
+          "name": "hip",
+          "valueCm": 100,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment hip: 100 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-blouse-001/size-guide"
+        },
+        {
+          "size": "S",
+          "name": "shoulder_width",
+          "valueCm": 38,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment shoulder width: 38 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-blouse-001/size-guide"
+        },
+        {
+          "size": "S",
           "name": "sleeve_length",
           "valueCm": 59,
           "status": "retailer_provided",
           "sourceText": "Size S garment sleeve length: 59 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-blouse-001/size-guide"
+        },
+        {
+          "size": "S",
+          "name": "inside_leg",
+          "valueCm": 76,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment inside leg: 76 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-blouse-001/size-guide"
+        },
+        {
+          "size": "S",
+          "name": "garment_length",
+          "valueCm": 64,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment garment length: 64 cm.",
           "sourceUrl": "https://demo.skin-ai.example/products/mock-blouse-001/size-guide"
         },
         {
@@ -847,10 +1607,50 @@
         },
         {
           "size": "M",
+          "name": "waist",
+          "valueCm": 90,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment waist: 90 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-blouse-001/size-guide"
+        },
+        {
+          "size": "M",
+          "name": "hip",
+          "valueCm": 108,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment hip: 108 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-blouse-001/size-guide"
+        },
+        {
+          "size": "M",
+          "name": "shoulder_width",
+          "valueCm": 40,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment shoulder width: 40 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-blouse-001/size-guide"
+        },
+        {
+          "size": "M",
           "name": "sleeve_length",
           "valueCm": 60,
           "status": "retailer_provided",
           "sourceText": "Size M garment sleeve length: 60 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-blouse-001/size-guide"
+        },
+        {
+          "size": "M",
+          "name": "inside_leg",
+          "valueCm": 77,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment inside leg: 77 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-blouse-001/size-guide"
+        },
+        {
+          "size": "M",
+          "name": "garment_length",
+          "valueCm": 66,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment garment length: 66 cm.",
           "sourceUrl": "https://demo.skin-ai.example/products/mock-blouse-001/size-guide"
         },
         {
@@ -863,10 +1663,50 @@
         },
         {
           "size": "L",
+          "name": "waist",
+          "valueCm": 98,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment waist: 98 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-blouse-001/size-guide"
+        },
+        {
+          "size": "L",
+          "name": "hip",
+          "valueCm": 116,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment hip: 116 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-blouse-001/size-guide"
+        },
+        {
+          "size": "L",
+          "name": "shoulder_width",
+          "valueCm": 42,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment shoulder width: 42 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-blouse-001/size-guide"
+        },
+        {
+          "size": "L",
           "name": "sleeve_length",
           "valueCm": 61,
           "status": "retailer_provided",
           "sourceText": "Size L garment sleeve length: 61 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-blouse-001/size-guide"
+        },
+        {
+          "size": "L",
+          "name": "inside_leg",
+          "valueCm": 78,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment inside leg: 78 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-blouse-001/size-guide"
+        },
+        {
+          "size": "L",
+          "name": "garment_length",
+          "valueCm": 68,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment garment length: 68 cm.",
           "sourceUrl": "https://demo.skin-ai.example/products/mock-blouse-001/size-guide"
         }
       ],
@@ -950,10 +1790,34 @@
         },
         {
           "size": "S",
+          "name": "shoulder_width",
+          "valueCm": 38,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment shoulder width: 38 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-jumpsuit-001/size-guide"
+        },
+        {
+          "size": "S",
+          "name": "sleeve_length",
+          "valueCm": 32,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment sleeve length: 32 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-jumpsuit-001/size-guide"
+        },
+        {
+          "size": "S",
           "name": "inside_leg",
           "valueCm": 77,
           "status": "retailer_provided",
           "sourceText": "Size S garment inside leg: 77 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-jumpsuit-001/size-guide"
+        },
+        {
+          "size": "S",
+          "name": "garment_length",
+          "valueCm": 142,
+          "status": "retailer_provided",
+          "sourceText": "Size S garment garment length: 142 cm.",
           "sourceUrl": "https://demo.skin-ai.example/products/mock-jumpsuit-001/size-guide"
         },
         {
@@ -982,10 +1846,34 @@
         },
         {
           "size": "M",
+          "name": "shoulder_width",
+          "valueCm": 40,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment shoulder width: 40 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-jumpsuit-001/size-guide"
+        },
+        {
+          "size": "M",
+          "name": "sleeve_length",
+          "valueCm": 33,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment sleeve length: 33 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-jumpsuit-001/size-guide"
+        },
+        {
+          "size": "M",
           "name": "inside_leg",
           "valueCm": 78,
           "status": "retailer_provided",
           "sourceText": "Size M garment inside leg: 78 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-jumpsuit-001/size-guide"
+        },
+        {
+          "size": "M",
+          "name": "garment_length",
+          "valueCm": 144,
+          "status": "retailer_provided",
+          "sourceText": "Size M garment garment length: 144 cm.",
           "sourceUrl": "https://demo.skin-ai.example/products/mock-jumpsuit-001/size-guide"
         },
         {
@@ -1014,10 +1902,34 @@
         },
         {
           "size": "L",
+          "name": "shoulder_width",
+          "valueCm": 42,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment shoulder width: 42 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-jumpsuit-001/size-guide"
+        },
+        {
+          "size": "L",
+          "name": "sleeve_length",
+          "valueCm": 34,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment sleeve length: 34 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-jumpsuit-001/size-guide"
+        },
+        {
+          "size": "L",
           "name": "inside_leg",
           "valueCm": 79,
           "status": "retailer_provided",
           "sourceText": "Size L garment inside leg: 79 cm.",
+          "sourceUrl": "https://demo.skin-ai.example/products/mock-jumpsuit-001/size-guide"
+        },
+        {
+          "size": "L",
+          "name": "garment_length",
+          "valueCm": 146,
+          "status": "retailer_provided",
+          "sourceText": "Size L garment garment length: 146 cm.",
           "sourceUrl": "https://demo.skin-ai.example/products/mock-jumpsuit-001/size-guide"
         }
       ],

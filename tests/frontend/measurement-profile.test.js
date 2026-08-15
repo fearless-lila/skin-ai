@@ -7,12 +7,16 @@ import {
   normalizeMeasurementProfile
 } from "../../frontend/measurement-profile.js";
 
-test("normalizes optional body measurements and requires at least one", () => {
+test("requires chest and waist while normalizing optional measurements", () => {
   assert.deepEqual(
-    normalizeMeasurementProfile({ chest: "91.24", waist: "", inside_leg: 76 }),
-    { chest: 91, inside_leg: 76 }
+    normalizeMeasurementProfile({ chest: "91.24", waist: "78", inside_leg: 76 }),
+    { chest: 91, waist: 78, inside_leg: 76 }
   );
-  assert.throws(() => normalizeMeasurementProfile({}), /at least one/i);
+  assert.throws(() => normalizeMeasurementProfile({}), /chest and waist/i);
+  assert.throws(
+    () => normalizeMeasurementProfile({ chest: 91 }),
+    /chest and waist/i
+  );
   assert.throws(
     () => normalizeMeasurementProfile({ chest: 500 }),
     /between 20 cm and 250 cm/i
@@ -21,6 +25,7 @@ test("normalizes optional body measurements and requires at least one", () => {
 
 test("validates only supported measurement profile fields", () => {
   assert.equal(isUsableMeasurementProfile({ chest: 92, waist: 78 }), true);
+  assert.equal(isUsableMeasurementProfile({ chest: 92 }), false);
   assert.equal(isUsableMeasurementProfile({ chest: 0 }), false);
   assert.equal(isUsableMeasurementProfile({ diagnosis: 1 }), false);
 });
@@ -45,8 +50,8 @@ test("compares saved measurements with every documented size", () => {
 
 test("does not invent comparisons for missing user or garment fields", () => {
   assert.deepEqual(
-    compareProductMeasurements({ hip: 100 }, [
-      { size: "M", name: "chest", valueCm: 108 }
+    compareProductMeasurements({ chest: 92, waist: 78, hip: 100 }, [
+      { size: "M", name: "sleeve_length", valueCm: 62 }
     ]),
     []
   );

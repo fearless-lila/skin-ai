@@ -34,8 +34,8 @@
         <section class="hero" aria-labelledby="page-title">
           <div class="hero-copy">
             <p class="eyebrow">
-              <span aria-hidden="true">♥</span> Accessible clothing, designed
-              with disabled people in mind
+              <span aria-hidden="true">♥</span> Less effort. More confidence.
+              Designed for disabled people.
             </p>
             <h1 id="page-title">
               Find clothes that<br />
@@ -43,10 +43,11 @@
               with fewer try-ons.
             </h1>
             <p class="intro-copy">
-              AccessWear is clothing search designed with disabled people in
-              mind. Tell me what makes dressing easier, painful, tiring or
-              inaccessible. I’ll compare documented access features and help
-              you preview selected clothes before a physical try-on.
+              We help disabled people find clothes that are easier, more
+              comfortable and more practical to wear. Tell me what makes
+              dressing painful, tiring or inaccessible, and I’ll help you
+              compare useful clothing features, check fit details and preview
+              selected clothes before a physical try-on.
             </p>
           </div>
 
@@ -87,6 +88,23 @@
           id="clothing-assistant"
           aria-label="Clothing assistant conversation"
         >
+          <header class="assistant-header">
+            <span class="assistant-header-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M12 5.2a2.4 2.4 0 1 1 2.4 2.4c0 1.5-2.4 1.8-2.4 3.1" />
+                <path d="m12 10.7-7.6 5.4a1 1 0 0 0 .6 1.8h14a1 1 0 0 0 .6-1.8Z" />
+              </svg>
+            </span>
+            <span class="assistant-header-copy">
+              <strong>Clothing Assistant</strong>
+              <span>Clothing recommendations designed around your needs</span>
+            </span>
+            <span class="assistant-availability">
+              <span aria-hidden="true"></span>
+              Here to help
+            </span>
+          </header>
+
           <div class="conversation-viewport" id="conversation-viewport">
             <div
               class="message-list"
@@ -97,6 +115,18 @@
             ></div>
           </div>
 
+          <div class="starter-prompts" id="starter-prompts" hidden>
+            <p>Try a starting point</p>
+            <div>
+              <button type="button">I need something easier to put on</button>
+              <button type="button">I want fewer buttons</button>
+              <button type="button">I get tired when dressing</button>
+              <button type="button">
+                Help me find something comfortable while seated
+              </button>
+            </div>
+          </div>
+
           <form class="composer" id="chat-form">
             <label for="message-input">
               What clothing do you need, and what would make it easier?
@@ -105,9 +135,9 @@
               <textarea
                 id="message-input"
                 name="message"
-                rows="2"
+                rows="1"
                 maxlength="2000"
-                placeholder="Describe the clothing you need and what makes dressing easier..."
+                placeholder="Describe what you're looking for or what makes dressing difficult..."
                 required
               ></textarea>
               <button class="send-button" id="send-button" type="submit">
@@ -240,13 +270,21 @@
 
     <template id="welcome-template">
       <article class="message assistant-message">
-        <p class="message-label">AccessWear</p>
-        <p>
-          Welcome to AccessWear, clothing search designed with disabled people
-          in mind. Tell me what you want to wear and what would make it easier
-          to put on, fasten, move in or take off. I’ll use documented product
-          details and can help you preview selected items virtually.
-        </p>
+        <span class="message-avatar assistant-avatar" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M12 5.2a2.4 2.4 0 1 1 2.4 2.4c0 1.5-2.4 1.8-2.4 3.1" />
+            <path d="m12 10.7-7.6 5.4a1 1 0 0 0 .6 1.8h14a1 1 0 0 0 .6-1.8Z" />
+          </svg>
+        </span>
+        <span class="message-stack">
+          <span class="message-label">Clothing Assistant</span>
+          <span class="message-bubble">
+            Welcome to AccessWear. Tell me what you want to wear and what would
+            make it easier to put on, fasten, move in or take off. I’ll use
+            documented product details and can help you preview selected items
+            virtually.
+          </span>
+        </span>
       </article>
     </template>
 

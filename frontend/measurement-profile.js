@@ -21,6 +21,7 @@ export const MEASUREMENT_FIELDS = Object.freeze([
 ]);
 
 const PROFILE_FIELD_NAMES = new Set(MEASUREMENT_FIELDS.map(({ name }) => name));
+const REQUIRED_PROFILE_FIELD_NAMES = Object.freeze(["chest", "waist"]);
 const CIRCUMFERENCE_EASE_CM = Object.freeze({
   chest: { minimum: 6, comfortableMaximum: 14 },
   waist: { minimum: 2, comfortableMaximum: 10 },
@@ -41,8 +42,10 @@ export function normalizeMeasurementProfile(values) {
     profile[name] = roundToHalfCentimetre(valueCm);
   }
 
-  if (Object.keys(profile).length === 0) {
-    throw new TypeError("Enter at least one measurement.");
+  if (REQUIRED_PROFILE_FIELD_NAMES.some((name) => profile[name] === undefined)) {
+    throw new TypeError(
+      "Enter your chest and waist measurements. Other measurements are optional."
+    );
   }
 
   return profile;
@@ -55,7 +58,9 @@ export function isUsableMeasurementProfile(profile) {
 
   const entries = Object.entries(profile);
   return (
-    entries.length > 0 &&
+    REQUIRED_PROFILE_FIELD_NAMES.every(
+      (name) => Number.isFinite(profile[name])
+    ) &&
     entries.every(
       ([name, value]) =>
         PROFILE_FIELD_NAMES.has(name) &&

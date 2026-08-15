@@ -6,6 +6,7 @@ import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 
 import { MOCK_PRODUCT_MEASUREMENTS } from "../../frontend/mock-product-measurements.js";
+import { MEASUREMENT_FIELDS } from "../../frontend/measurement-profile.js";
 
 const productSchema = JSON.parse(
   readFileSync(
@@ -111,7 +112,9 @@ test("every mock product has a trusted reference for its YouCam region", () => {
   }
 });
 
-test("every available mock size has documented garment measurements", () => {
+test("every available mock size has every supported garment measurement", () => {
+  const expectedMeasurementNames = MEASUREMENT_FIELDS.map(({ name }) => name);
+
   for (const product of catalogue.products) {
     const measuredSizes = new Set(
       product.measurements.map((measurement) => measurement.size)
@@ -126,6 +129,16 @@ test("every available mock size has documented garment measurements", () => {
       measurementKeys.length,
       `${product.id}: duplicate size measurement`
     );
+
+    for (const size of product.sizes) {
+      assert.deepEqual(
+        product.measurements
+          .filter((measurement) => measurement.size === size)
+          .map((measurement) => measurement.name),
+        expectedMeasurementNames,
+        `${product.id} Size ${size}: incomplete measurements`
+      );
+    }
   }
 });
 

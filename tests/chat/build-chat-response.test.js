@@ -75,7 +75,12 @@ test("joins matcher results with trusted product-card data", () => {
     avery.product.measurements.filter(({ size }) => size === "M"),
     [
       { size: "M", name: "chest", valueCm: 100 },
-      { size: "M", name: "waist", valueCm: 86 }
+      { size: "M", name: "waist", valueCm: 86 },
+      { size: "M", name: "hip", valueCm: 104 },
+      { size: "M", name: "shoulder_width", valueCm: 40 },
+      { size: "M", name: "sleeve_length", valueCm: 31 },
+      { size: "M", name: "inside_leg", valueCm: 77 },
+      { size: "M", name: "garment_length", valueCm: 113 }
     ]
   );
   assert.equal("sourceUrl" in avery.product.measurements[0], false);

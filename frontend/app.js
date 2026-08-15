@@ -13,6 +13,7 @@ import {
 import {
   MEASUREMENT_FIELDS,
   compareProductMeasurements,
+  isUsableMeasurementProfile,
   normalizeMeasurementProfile
 } from "./measurement-profile.js";
 import { findRecommendedSizeIndex } from "./measurement-tabs.js";
@@ -41,6 +42,7 @@ const input = document.querySelector("#message-input");
 const sendButton = document.querySelector("#send-button");
 const clearButton = document.querySelector("#clear-chat");
 const messageList = document.querySelector("#message-list");
+const starterPrompts = document.querySelector("#starter-prompts");
 const tailorFinderContainer = document.querySelector(
   "#tailor-finder-container"
 );
@@ -76,6 +78,14 @@ input.addEventListener("keydown", (event) => {
     form.requestSubmit();
   }
 });
+input.addEventListener("input", resizeComposerInput);
+for (const promptButton of starterPrompts.querySelectorAll("button")) {
+  promptButton.addEventListener("click", () => {
+    input.value = promptButton.textContent.trim();
+    resizeComposerInput();
+    input.focus();
+  });
+}
 clearButton.addEventListener("click", () => {
   resetPhotoSelection();
   tailorSearchResults = null;
@@ -98,6 +108,7 @@ async function handleSubmit(event) {
   appendMessage("user", currentMessage);
   scrollConversationToBottom();
   input.value = "";
+  resizeComposerInput();
   setBusy(true);
   setStatus("Checking your access needs and clothing request…");
 
@@ -151,6 +162,7 @@ async function handleSubmit(event) {
 function renderConversation() {
   removeTurnstileWidget();
   messageList.replaceChildren();
+  starterPrompts.hidden = session.recentMessages.length !== 0;
 
   if (session.recentMessages.length === 0) {
     messageList.append(welcomeTemplate.content.cloneNode(true));
@@ -179,18 +191,26 @@ function appendMessage(
   const message = document.createElement("article");
   message.className = `message ${role}-message`;
 
+  const avatar = buildMessageAvatar(role);
+  const stack = document.createElement("div");
+  stack.className = "message-stack";
+
   const label = document.createElement("p");
   label.className = "message-label";
-  label.textContent = role === "assistant" ? "AccessWear" : "You";
+  label.textContent = role === "assistant" ? "Clothing Assistant" : "You";
 
+  const bubble = document.createElement("div");
+  bubble.className = "message-bubble";
   const text = document.createElement("p");
   text.textContent = content;
+  bubble.append(text);
 
-  message.append(label, text);
+  stack.append(label, bubble);
+  message.append(avatar, stack);
 
   if (attachment?.type === "product_results") {
     message.classList.add("has-product-results");
-    message.append(
+    stack.append(
       buildProductResults(attachment.results, {
         current: currentProductResults
       })
@@ -217,26 +237,70 @@ function appendMessage(
 
     const caption = document.createElement("figcaption");
     caption.textContent =
-      "AI-generated visual preview only. It does not confirm measurements, comfort, accessibility or physical fit.";
+      "AI-generated visual preview only. It may change body proportions or physical features and does not confirm measurements, comfort, accessibility or fit.";
     figure.append(image, fallback, caption);
-    message.append(figure);
+    stack.append(figure);
   }
 
   messageList.append(message);
   return message;
 }
 
+function buildMessageAvatar(role) {
+  const avatar = document.createElement("span");
+  avatar.className = `message-avatar ${
+    role === "assistant" ? "assistant-avatar" : "user-avatar"
+  }`;
+  avatar.setAttribute("aria-hidden", "true");
+
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("focusable", "false");
+  svg.setAttribute("aria-hidden", "true");
+
+  if (role === "assistant") {
+    svg.append(
+      buildSvgPath(
+        "M12 5.2a2.4 2.4 0 1 1 2.4 2.4c0 1.5-2.4 1.8-2.4 3.1"
+      ),
+      buildSvgPath("m12 10.7-7.6 5.4a1 1 0 0 0 .6 1.8h14a1 1 0 0 0 .6-1.8Z")
+    );
+  } else {
+    svg.append(
+      buildSvgPath("M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"),
+      buildSvgPath("M4.5 20a7.5 7.5 0 0 1 15 0")
+    );
+  }
+
+  avatar.append(svg);
+  return avatar;
+}
+
+function buildSvgPath(pathData) {
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", pathData);
+  return path;
+}
+
 function appendError(content) {
   const error = document.createElement("article");
-  error.className = "message error-message";
+  error.className = "message assistant-message error-message";
+
+  const avatar = buildMessageAvatar("assistant");
+  const stack = document.createElement("div");
+  stack.className = "message-stack";
 
   const label = document.createElement("p");
   label.className = "message-label";
   label.textContent = "Something went wrong";
 
+  const bubble = document.createElement("div");
+  bubble.className = "message-bubble";
   const text = document.createElement("p");
   text.textContent = content;
-  error.append(label, text);
+  bubble.append(text);
+  stack.append(label, bubble);
+  error.append(avatar, stack);
   messageList.append(error);
 }
 
@@ -263,18 +327,44 @@ function buildProductResults(results, { current }) {
   const header = document.createElement("div");
   header.className = "results-header";
 
+  const titleRow = document.createElement("div");
+  titleRow.className = "results-title-row";
+  const titleIcon = document.createElement("span");
+  titleIcon.className = "results-title-icon";
+  titleIcon.setAttribute("aria-hidden", "true");
+  titleIcon.textContent = "✦";
+  const titleCopy = document.createElement("div");
+
   const heading = document.createElement("h3");
   heading.textContent = "Accessible clothing matches";
-  header.append(heading);
+  const description = document.createElement("p");
+  description.textContent = "Here’s what I found based on your request.";
+  titleCopy.append(heading, description);
+  titleRow.append(titleIcon, titleCopy);
+  header.append(titleRow);
 
   if (results.notice) {
-    const notice = document.createElement("p");
+    const notice = document.createElement("details");
     notice.className = "catalogue-notice";
-    notice.textContent = results.notice;
+    const summary = document.createElement("summary");
+    const noticeIcon = document.createElement("span");
+    noticeIcon.setAttribute("aria-hidden", "true");
+    noticeIcon.textContent = "i";
+    const noticeCopy = document.createElement("span");
+    const noticeHeading = document.createElement("strong");
+    noticeHeading.textContent = "Demo product";
+    const noticeDescription = document.createElement("span");
+    noticeDescription.textContent =
+      "Fictional product used for local development and matching tests.";
+    noticeCopy.append(noticeHeading, noticeDescription);
+    summary.append(noticeIcon, noticeCopy);
+    const fullNotice = document.createElement("p");
+    fullNotice.textContent = results.notice;
+    notice.append(summary, fullNotice);
     header.append(notice);
   }
 
-  if (current && session.measurementProfile) {
+  if (current && isUsableMeasurementProfile(session.measurementProfile)) {
     header.append(buildMeasurementProfileSummary());
   }
 
@@ -696,7 +786,7 @@ function createProductCard(result, kind, { current, resultSet }) {
   const badge = document.createElement("p");
   badge.className = `match-badge ${kind}`;
   badge.textContent =
-    kind === "compatible" ? "Documented match" : "Check missing details";
+    kind === "compatible" ? "✓ Documented match" : "ⓘ Check missing details";
 
   const name = document.createElement("h4");
   name.textContent = product.name;
@@ -711,21 +801,17 @@ function createProductCard(result, kind, { current, resultSet }) {
 
   const sizes = document.createElement("p");
   sizes.className = "sizes";
-  sizes.textContent = compatibility.compatibleSizes?.length
-    ? `Compatible sizes: ${compatibility.compatibleSizes.join(", ")}`
-    : `Available sizes: ${product.sizes.join(", ")}`;
+  sizes.textContent = `Available sizes: ${product.sizes.join(", ")}`;
 
-  const facts = document.createElement("ul");
-  facts.className = "evidence-list";
+  const facts = document.createElement("dl");
+  facts.className = "product-feature-grid";
   const evidence =
     kind === "compatible"
       ? compatibility.confirmedMatches.slice(0, 3)
       : compatibility.missingInformation.slice(0, 3);
 
   for (const fact of evidence) {
-    const item = document.createElement("li");
-    item.textContent = formatEvidence(fact, kind);
-    facts.append(item);
+    facts.append(buildProductFeature(fact, kind));
   }
 
   const link = document.createElement("a");
@@ -733,7 +819,7 @@ function createProductCard(result, kind, { current, resultSet }) {
   link.href = product.productUrl;
   link.target = "_blank";
   link.rel = "noreferrer";
-  link.textContent = "View product details";
+  link.textContent = "View product details →";
 
   const actions = document.createElement("div");
   actions.className = "product-actions";
@@ -743,9 +829,12 @@ function createProductCard(result, kind, { current, resultSet }) {
     tryOnButton.className = "try-on-button";
     tryOnButton.type = "button";
     tryOnButton.setAttribute("aria-pressed", String(isSelected));
-    tryOnButton.textContent = isSelected
-      ? "Selected to try on"
-      : "Try it on";
+    const tryOnIcon = document.createElement("span");
+    tryOnIcon.setAttribute("aria-hidden", "true");
+    tryOnIcon.textContent = "♧";
+    const tryOnLabel = document.createElement("span");
+    tryOnLabel.textContent = isSelected ? "Selected to try on" : "Try it on";
+    tryOnButton.append(tryOnIcon, tryOnLabel);
     tryOnButton.addEventListener("click", () =>
       handleTryOnSelection(product, resultSet)
     );
@@ -755,9 +844,16 @@ function createProductCard(result, kind, { current, resultSet }) {
   const measurementButton = document.createElement("button");
   measurementButton.className = "measurement-button";
   measurementButton.type = "button";
-  measurementButton.textContent = session.measurementProfile
+  const measurementIcon = document.createElement("span");
+  measurementIcon.setAttribute("aria-hidden", "true");
+  measurementIcon.textContent = "↔";
+  const measurementLabel = document.createElement("span");
+  measurementLabel.textContent = isUsableMeasurementProfile(
+    session.measurementProfile
+  )
     ? "Check my measurements"
     : "Add measurements";
+  measurementButton.append(measurementIcon, measurementLabel);
   measurementButton.addEventListener("click", () => {
     openMeasurementDialog(product);
   });
@@ -801,7 +897,7 @@ function openMeasurementDialog(product) {
   });
   document.body.append(dialog);
 
-  if (session.measurementProfile) {
+  if (isUsableMeasurementProfile(session.measurementProfile)) {
     renderMeasurementComparison(dialog, product);
   } else {
     renderMeasurementForm(dialog, product);
@@ -821,7 +917,7 @@ function renderMeasurementForm(dialog, product) {
 
   const intro = document.createElement("p");
   intro.textContent =
-    "Enter any body measurements you know in centimetres. They stay in this browser conversation and are not sent to the clothing assistant or YouCam.";
+    "Chest and waist are required. Add any other body measurements you know in centimetres. They stay in this browser conversation and are not sent to the clothing assistant or YouCam.";
 
   const form = document.createElement("form");
   form.className = "measurement-form";
@@ -830,11 +926,12 @@ function renderMeasurementForm(dialog, product) {
   grid.className = "measurement-field-grid";
 
   for (const field of MEASUREMENT_FIELDS) {
+    const isRequired = ["chest", "waist"].includes(field.name);
     const group = document.createElement("div");
     group.className = "measurement-field";
     const label = document.createElement("label");
     label.htmlFor = `measurement-${field.name}`;
-    label.textContent = `${field.label} (cm)`;
+    label.textContent = `${field.label} (cm) — ${isRequired ? "required" : "optional"}`;
     const help = document.createElement("span");
     help.id = `measurement-${field.name}-help`;
     help.textContent = field.help;
@@ -846,6 +943,10 @@ function renderMeasurementForm(dialog, product) {
     input.min = "20";
     input.max = "250";
     input.step = "0.5";
+    input.required = isRequired;
+    if (Number.isFinite(session.measurementProfile?.[field.name])) {
+      input.value = String(session.measurementProfile[field.name]);
+    }
     input.setAttribute("aria-describedby", help.id);
     group.append(label, help, input);
     grid.append(group);
@@ -880,7 +981,9 @@ function renderMeasurementForm(dialog, product) {
     } catch (caught) {
       error.textContent =
         caught instanceof Error ? caught.message : "Check your measurements.";
-      form.querySelector("input")?.focus();
+      const firstMissingRequiredInput = [...form.querySelectorAll("input[required]")]
+        .find((field) => field.value.trim() === "");
+      (firstMissingRequiredInput ?? form.querySelector("input"))?.focus();
     }
   });
 
@@ -968,9 +1071,12 @@ function buildMeasurementDialogCloseButton(dialog) {
 }
 
 function resolveProductMeasurements(product) {
+  const bundledMockMeasurements = MOCK_PRODUCT_MEASUREMENTS[product.id];
+  if (Array.isArray(bundledMockMeasurements)) return bundledMockMeasurements;
+
   if (Array.isArray(product.measurements)) return product.measurements;
 
-  return MOCK_PRODUCT_MEASUREMENTS[product.id] ?? [];
+  return [];
 }
 
 function buildMeasurementSizeTabs(sizeResults) {
@@ -1262,7 +1368,7 @@ function buildTryOnSelection(results) {
   const disclaimer = document.createElement("p");
   disclaimer.className = "selection-disclaimer";
   disclaimer.textContent =
-    "This is a visual preview only. It cannot confirm fit, comfort, ease of dressing or accessibility.";
+    "AI warning: this preview may change body proportions or physical features. It is only a clothing visualization and cannot confirm fit, comfort, ease of dressing or accessibility.";
 
   const form = buildPhotoPreparationForm(selectedResult.product);
   panel.append(label, heading, explanation, guidance, form, disclaimer);
@@ -1773,12 +1879,74 @@ function formatPrice(price) {
   }
 }
 
-function formatEvidence(fact, kind) {
-  const field = String(fact.field ?? "information").replaceAll("_", " ");
-  if (kind === "missing") return `Missing: ${field}`;
+function buildProductFeature(fact, kind) {
+  const feature = document.createElement("div");
+  feature.className = `product-feature ${kind}`;
+  const presentation = productFeaturePresentation(fact.field);
 
-  const values = Array.isArray(fact.actualValues) ? fact.actualValues.join(" · ") : "";
-  return values ? `${field}: ${values}` : field;
+  const icon = document.createElement("span");
+  icon.className = "product-feature-icon";
+  icon.setAttribute("aria-hidden", "true");
+  icon.textContent = presentation.icon;
+
+  const copy = document.createElement("div");
+  const term = document.createElement("dt");
+  term.textContent = presentation.label;
+  const description = document.createElement("dd");
+  description.textContent =
+    kind === "missing"
+      ? "Not documented"
+      : formatProductFeatureValues(fact.field, fact.actualValues);
+  copy.append(term, description);
+  feature.append(icon, copy);
+  return feature;
+}
+
+function productFeaturePresentation(field) {
+  const presentations = {
+    garmentType: { label: "Garment type", icon: "◇" },
+    "access.closureType": { label: "Fastening", icon: "◉" },
+    "access.closureLocation": { label: "Closure", icon: "↔" },
+    "access.dressingMethod": { label: "Dressing feature", icon: "♡" },
+    "access.gripFeature": { label: "Grip feature", icon: "○" },
+    "access.openingExtent": { label: "Opening extent", icon: "↕" },
+    measurements: { label: "Measurements", icon: "⌁" }
+  };
+
+  return presentations[field] ?? { label: "Product detail", icon: "i" };
+}
+
+function formatProductFeatureValues(field, values) {
+  if (!Array.isArray(values) || values.length === 0) return "Documented";
+
+  return values
+    .map((value) => humanizeProductFeatureValue(field, value))
+    .join(" · ");
+}
+
+function humanizeProductFeatureValue(field, value) {
+  const raw = String(value);
+  if (field === "measurements") {
+    return raw.replace(/^([a-z_]+):/i, (_, name) =>
+      `${humanizeWords(name)}:`
+    );
+  }
+
+  const normalized = raw.toLowerCase();
+  const specialValues = {
+    "access.closureLocation:front": "Front opening",
+    "access.closureLocation:back": "Back fastening",
+    "access.closureLocation:side": "Side opening",
+    "access.dressingMethod:full_front_opening": "Full front opening",
+    "access.dressingMethod:pull_on": "Pull-on",
+    "access.dressingMethod:wrap": "Wrap opening"
+  };
+  return specialValues[`${field}:${normalized}`] ?? humanizeWords(raw);
+}
+
+function humanizeWords(value) {
+  const words = String(value).replaceAll("_", " ").trim();
+  return words ? `${words.charAt(0).toUpperCase()}${words.slice(1)}` : "Documented";
 }
 
 function setBusy(isBusy) {
@@ -1792,6 +1960,11 @@ function setBusy(isBusy) {
 
 function setStatus(message) {
   statusRegion.textContent = message;
+}
+
+function resizeComposerInput() {
+  input.style.height = "auto";
+  input.style.height = `${Math.min(input.scrollHeight, 160)}px`;
 }
 
 function setupScrollInteractions() {
