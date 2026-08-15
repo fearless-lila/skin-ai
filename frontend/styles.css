@@ -1709,6 +1709,31 @@ h1 span {
   line-height: 1.5;
 }
 
+.photo-data-notice {
+  margin: -6px 0 16px !important;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.photo-data-notice a,
+.composer-data-note a,
+.footer-links a,
+.legal-shell a {
+  color: #9f174b;
+  font-weight: 800;
+  text-underline-offset: 3px;
+}
+
+.photo-data-notice a:focus-visible,
+.composer-data-note a:focus-visible,
+.footer-links a:focus-visible,
+.legal-shell a:focus-visible {
+  outline: 3px solid rgb(165 22 77 / 28%);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
 .photo-ready,
 .generation-progress,
 .generation-error,
@@ -1893,6 +1918,13 @@ input:disabled {
 
 .composer-help {
   margin: 8px 4px 0;
+}
+
+.composer-data-note {
+  margin: 6px 4px 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
 }
 
 .request-status {
@@ -2460,6 +2492,80 @@ footer {
   color: var(--muted);
   font-size: 0.84rem;
   text-align: center;
+}
+
+footer p {
+  margin: 0;
+}
+
+.footer-links {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-top: 8px;
+}
+
+.legal-page {
+  min-height: 100vh;
+}
+
+.legal-shell {
+  width: min(100% - 36px, 860px);
+  margin: 0 auto;
+  padding: clamp(34px, 7vw, 72px) 0 80px;
+}
+
+.legal-back-link {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.legal-shell > header {
+  margin: clamp(28px, 5vw, 48px) 0 34px;
+  padding: clamp(26px, 5vw, 48px);
+  border: 1px solid var(--line);
+  border-radius: 26px;
+  background: rgb(255 255 255 / 88%);
+  box-shadow: var(--shadow-soft);
+}
+
+.legal-shell h1 {
+  max-width: 720px;
+  margin: 10px 0 18px;
+  font-size: clamp(2.25rem, 7vw, 4.5rem);
+  line-height: 1.02;
+}
+
+.legal-shell header > p:last-child {
+  max-width: 700px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 1.05rem;
+}
+
+.legal-shell section {
+  margin-top: 16px;
+  padding: clamp(22px, 4vw, 34px);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: white;
+}
+
+.legal-shell h2 {
+  margin: 0 0 10px;
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+}
+
+.legal-shell section p,
+.legal-shell section ul {
+  margin: 10px 0 0;
+  color: var(--muted);
+}
+
+.legal-shell li + li {
+  margin-top: 7px;
 }
 
 @media (max-width: 1120px) {

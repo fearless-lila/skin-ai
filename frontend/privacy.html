@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="How the AccessWear hackathon prototype uses chat, measurement, photograph and location data."
+    />
+    <title>Privacy and data use — AccessWear</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="legal-page">
+    <main class="legal-shell">
+      <a class="legal-back-link" href="/">← Back to AccessWear</a>
+
+      <header>
+        <p class="eyebrow">Privacy and data use</p>
+        <h1>Know where your information goes.</h1>
+        <p>
+          AccessWear is a public hackathon prototype by Lila Hu. This notice
+          explains the information used by each feature so you can decide what
+          to share. Last updated 15 August 2026.
+        </p>
+      </header>
+
+      <section>
+        <h2>Clothing conversation</h2>
+        <p>
+          Your message, a bounded number of recent chat messages, and validated
+          clothing requirements are sent through the AccessWear Cloudflare
+          Worker to the OpenAI API. OpenAI helps interpret the language of your
+          request; application code decides which fictional products match.
+        </p>
+        <p>
+          Do not include a diagnosis, medical record, contact details or other
+          information that is not needed to describe your clothing needs.
+          AccessWear requests API processing with storage disabled, but
+          provider security and abuse-monitoring retention may still apply.
+          Read
+          <a href="https://developers.openai.com/api/docs/guides/your-data"
+             target="_blank" rel="noreferrer">OpenAI's API data controls</a>.
+        </p>
+      </section>
+
+      <section>
+        <h2>Saved measurements</h2>
+        <p>
+          Measurements are stored only in this browser's session storage. They
+          are used locally to compare your values with fictional garment data.
+          They are not sent to OpenAI, YouCam or the alteration search. Select
+          <strong>Reset measurements</strong> or <strong>Start over</strong> to
+          remove them from the current browser conversation.
+        </p>
+      </section>
+
+      <section>
+        <h2>Virtual try-on photograph</h2>
+        <p>
+          Virtual try-on is optional. You must confirm that you are the person
+          shown in the photograph, or that you have their permission, before
+          uploading it. AccessWear sends the photo directly to a temporary
+          YouCam upload location and asks Perfect Corp.'s YouCam API to create
+          the preview. AccessWear's Worker does not store the photograph bytes.
+        </p>
+        <p>
+          The generated result link is kept in this browser's session storage
+          with the recent conversation. Select <strong>Start over</strong> or
+          close the browser session to remove the local record. Perfect Corp.'s
+          processing and retention are governed by its
+          <a href="https://www.perfectcorp.com/perfectbeauty/youcam/privacy-policy"
+             target="_blank" rel="noreferrer">YouCam privacy policy</a>
+          and
+          <a href="https://www.perfectcorp.com/perfectbeauty/youcam/terms-of-service-api"
+             target="_blank" rel="noreferrer">YouCam API terms</a>.
+        </p>
+      </section>
+
+      <section>
+        <h2>Alteration-service location</h2>
+        <p>
+          If you explicitly search, a town/postcode or browser-provided
+          coordinates are sent through the Worker to OpenStreetMap search
+          services. The location is used for that search, is not added to your
+          clothing conversation, and is kept only in page memory until refresh.
+          Read the
+          <a href="https://osmfoundation.org/wiki/Privacy_Policy"
+             target="_blank" rel="noreferrer">OpenStreetMap privacy policy</a>.
+        </p>
+      </section>
+
+      <section>
+        <h2>Hosting and security</h2>
+        <p>
+          Cloudflare hosts the site and Worker and provides Turnstile abuse
+          protection. Like most hosting providers, it may process technical
+          request information needed to deliver and protect the service. Read
+          the
+          <a href="https://www.cloudflare.com/privacypolicy/"
+             target="_blank" rel="noreferrer">Cloudflare privacy policy</a>.
+        </p>
+      </section>
+
+      <section>
+        <h2>Your choices</h2>
+        <ul>
+          <li>You can use clothing chat without virtual try-on.</li>
+          <li>You can search for alterations without browser geolocation.</li>
+          <li>You can omit optional measurements.</li>
+          <li>You can select Start over to clear the browser conversation.</li>
+        </ul>
+        <p>
+          Privacy questions can be sent to the entrant through the AccessWear
+          Devpost project profile. This prototype is not intended for children
+          or for medical advice.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1442,8 +1442,21 @@ function buildPhotoPreparationForm(selectedProduct) {
   const consentLabel = document.createElement("label");
   consentLabel.htmlFor = "try-on-consent";
   consentLabel.textContent =
-    "I agree to send this photograph to YouCam to create my virtual clothing preview.";
+    "I confirm that I am the person shown in this photograph, or I have their permission, and I agree to send it to YouCam to create my virtual clothing preview.";
   consentRow.append(consent, consentLabel);
+
+  const photoDataNotice = document.createElement("p");
+  photoDataNotice.className = "photo-data-notice";
+  photoDataNotice.append(
+    "YouCam processes the photograph for this optional preview. Read ",
+    buildExternalLink("AccessWear’s privacy notice", "./privacy.html"),
+    " and the ",
+    buildExternalLink(
+      "YouCam privacy policy",
+      "https://www.perfectcorp.com/perfectbeauty/youcam/privacy-policy"
+    ),
+    "."
+  );
 
   const confirm = document.createElement("button");
   confirm.className = "confirm-photo-button";
@@ -1473,7 +1486,7 @@ function buildPhotoPreparationForm(selectedProduct) {
     await handlePhotoUpload();
   });
 
-  form.append(preview, consentRow, confirm);
+  form.append(preview, consentRow, photoDataNotice, confirm);
 
   if (photoSelection.uploaded) {
     const ready = document.createElement("p");

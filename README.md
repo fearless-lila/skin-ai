@@ -4,6 +4,54 @@ AccessWear is an accessible clothing assistant designed with disabled people in 
 
 Virtual try-on is a visual preview only. It is not proof that a garment fits. Fit and compatibility information must come from product measurements, user-provided measurements, and explicit garment attributes.
 
+## Judge quick start
+
+### Public demo
+
+Open https://skin-ai.pages.dev/ in a current desktop or mobile browser. The
+demo is free to access and does not require an account. Creating a virtual
+try-on requires a photograph of one consenting adult and completion of the
+on-page security check.
+
+### Run the frontend locally
+
+Requirements: Node.js 22 or later and npm.
+
+```bash
+npm install
+npm test
+npm run dev
+```
+
+Then open http://localhost:3000. If port 3000 is already in use, stop the
+existing local process before starting another server.
+
+The public Cloudflare Worker accepts the configured production frontend
+origin. To exercise provider-backed requests from localhost, deploy or run a
+Worker configured with `ALLOWED_ORIGIN=http://localhost:3000` and the secrets
+listed below. The complete catalogue, matching and frontend tests run locally
+without live provider credentials.
+
+### Required Worker configuration
+
+- Secrets: `OPENAI_API_KEY`, `YOUCAM_API_KEY`, `TURNSTILE_SECRET`
+- Variables: `ALLOWED_ORIGIN`, `OPENAI_MODEL`, `TURNSTILE_HOSTNAMES`
+- Bindings: `CHAT_RATE_LIMITER`, `TRY_ON_RATE_LIMITER`
+
+Copy `.dev.vars.example` to `.dev.vars` only for local Worker development.
+Never commit `.dev.vars` or a real API key.
+
+### Submission provenance
+
+AccessWear is an individual entry by Lila Hu. The project history begins on
+August 1, 2026, during the hackathon submission period. All bundled catalogue
+records are fictional mock data. Bundled product and inclusive-support images
+were generated specifically for this project using ChatGPT/Codex under the
+entrant's direction; they are not copied retailer or business photographs.
+
+See [asset provenance](docs/asset-provenance.md) and
+[third-party notices](THIRD_PARTY_NOTICES.md).
+
 ## Disability-first scope
 
 The MVP is designed around dressing barriers experienced by disabled people, including limited dexterity, restricted reach or shoulder movement, and pain or fatigue associated with changing clothes repeatedly.
