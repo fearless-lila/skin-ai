@@ -7,7 +7,7 @@
       "name": "Avery Front-Zip Dress",
       "retailer": {
         "id": "skin-ai-fictional-demo",
-        "name": "Skin AI Fictional Demo"
+        "name": "AccessWear Demo Catalogue"
       },
       "productUrl": "https://demo.skin-ai.example/products/mock-dress-001",
       "imageUrls": [
@@ -239,7 +239,7 @@
       "name": "Rowan Back-Zip Occasion Dress",
       "retailer": {
         "id": "skin-ai-fictional-demo",
-        "name": "Skin AI Fictional Demo"
+        "name": "AccessWear Demo Catalogue"
       },
       "productUrl": "https://demo.skin-ai.example/products/mock-dress-002",
       "imageUrls": [
@@ -472,7 +472,7 @@
       "name": "Maya Button-Front Shirt",
       "retailer": {
         "id": "skin-ai-fictional-demo",
-        "name": "Skin AI Fictional Demo"
+        "name": "AccessWear Demo Catalogue"
       },
       "productUrl": "https://demo.skin-ai.example/products/mock-shirt-001",
       "imageUrls": [
@@ -761,7 +761,7 @@
       "name": "Nora Wrap Dress",
       "retailer": {
         "id": "skin-ai-fictional-demo",
-        "name": "Skin AI Fictional Demo"
+        "name": "AccessWear Demo Catalogue"
       },
       "productUrl": "https://demo.skin-ai.example/products/mock-dress-003",
       "imageUrls": [
@@ -998,7 +998,7 @@
       "name": "Ellis Pull-On Trousers",
       "retailer": {
         "id": "skin-ai-fictional-demo",
-        "name": "Skin AI Fictional Demo"
+        "name": "AccessWear Demo Catalogue"
       },
       "productUrl": "https://demo.skin-ai.example/products/mock-trousers-001",
       "imageUrls": [
@@ -1284,7 +1284,7 @@
       "name": "Casey Magnetic-Front Cardigan",
       "retailer": {
         "id": "skin-ai-fictional-demo",
-        "name": "Skin AI Fictional Demo"
+        "name": "AccessWear Demo Catalogue"
       },
       "productUrl": "https://demo.skin-ai.example/products/mock-cardigan-001",
       "imageUrls": [
@@ -1516,7 +1516,7 @@
       "name": "Samira Detail-Unconfirmed Blouse",
       "retailer": {
         "id": "skin-ai-fictional-demo",
-        "name": "Skin AI Fictional Demo"
+        "name": "AccessWear Demo Catalogue"
       },
       "productUrl": "https://demo.skin-ai.example/products/mock-blouse-001",
       "imageUrls": [
@@ -1738,7 +1738,7 @@
       "name": "Taylor Side-Zip Jumpsuit",
       "retailer": {
         "id": "skin-ai-fictional-demo",
-        "name": "Skin AI Fictional Demo"
+        "name": "AccessWear Demo Catalogue"
       },
       "productUrl": "https://demo.skin-ai.example/products/mock-jumpsuit-001",
       "imageUrls": [

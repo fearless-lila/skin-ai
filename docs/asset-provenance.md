@@ -14,7 +14,7 @@ with the repository and updated if any submission asset changes.
 
 All eight product listings in `data/mock-catalogue.json` are fictional mock
 products created for AccessWear. This includes product names, the fictional
-retailer name `Skin AI Fictional Demo`, prices, sizes, garment measurements,
+retailer name `AccessWear Demo Catalogue`, prices, sizes, garment measurements,
 accessibility attributes and product URLs.
 
 The interface labels the listings as demo products. No product is presented
